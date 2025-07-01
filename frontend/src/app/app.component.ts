@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms'; // [(ngModel)] を使うために�
   standalone: true,
   imports: [CommonModule, RouterOutlet, FormsModule],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
   messages: Message[] = [];
@@ -22,7 +22,7 @@ export class AppComponent implements OnInit {
   }
 
   loadMessages(): void {
-    this.messageService.getMessages().subscribe(messages => {
+    this.messageService.getMessages().subscribe((messages) => {
       this.messages = messages;
     });
   }
@@ -32,11 +32,23 @@ export class AppComponent implements OnInit {
   // 成功したら、this.newMessageContent をクリアし、loadMessages() を呼び出してリストを更新します。
   addMessage(): void {
     // ここにコードを書いてください
+    const newMessage: Message = {
+      content: this.newMessageContent,
+    };
+    this.messageService.addMessage(newMessage).subscribe(() => {
+      this.newMessageContent = '';
+      this.loadMessages();
+    });
   }
 
   // TODO: メッセージを削除するメソッドを実装してください。
   // MessageServiceのdeleteMessage()を呼び出し、成功したら loadMessages() を呼び出してリストを更新します。
   deleteMessage(id: number | undefined): void {
     // ここにコードを書いてください
+    if (id) {
+      this.messageService.deleteMessage(id).subscribe(() => {
+        this.loadMessages();
+      });
+    }
   }
 }

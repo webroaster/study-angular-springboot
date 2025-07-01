@@ -8,13 +8,12 @@ export interface Message {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MessageService {
-
   private apiUrl = '/api/messages';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   getMessages(): Observable<Message[]> {
     return this.http.get<Message[]>(this.apiUrl);
@@ -24,13 +23,13 @@ export class MessageService {
   // POSTリクエストで、Messageオブジェクトを送信します。戻り値は Observable<Message> 型です。
   addMessage(message: Message): Observable<Message> {
     // ここにコードを書いてください
-    return new Observable<Message>(); // この行は仮実装です。削除して書き換えてください。
+    return this.http.post<Message>(this.apiUrl, message);
   }
 
   // TODO: 指定されたIDのメッセージを削除するメソッドを実装してください。
   // DELETEリクエストで、パスにIDを含めます。戻り値は Observable<void> 型です。
   deleteMessage(id: number): Observable<void> {
     // ここにコードを書いてください
-    return new Observable<void>(); // この行は仮実装です。削除して書き換えてください。
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

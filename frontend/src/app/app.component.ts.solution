@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { GreetService } from './greet.service';
+import { MessageService, Message } from './message.service';
 
 @Component({
   selector: 'app-root',
@@ -10,19 +10,18 @@ import { GreetService } from './greet.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
-export class AppComponent {
-  greetingMessage: string | null = null;
+export class AppComponent implements OnInit {
+  messages: Message[] = [];
 
-  constructor(private greetService: GreetService) {}
+  constructor(private messageService: MessageService) {}
 
-  // TODO: ボタンがクリックされた時に呼び出されるgreetメソッドを実装してください。
-  // GreetServiceのgetGreeting()を呼び出し、返ってきたレスポンスのmessageプロパティを
-  // this.greetingMessageにセットします。
-  // ヒント: .subscribe() を使ってレスポンスを受け取ります。
-  greet(name: string): void {
+  // TODO: コンポーネントが初期化される(ngOnInit)タイミングで、MessageServiceのgetMessages()を呼び出し、
+  // 返ってきたメッセージのリストをthis.messagesにセットする処理を実装してください。
+  // ヒント: .subscribe() を使って値を受け取ります。
+  ngOnInit() {
     // ここにコードを書いてください
-    this.greetService.getGreeting(name).subscribe((response) => {
-      this.greetingMessage = response.message;
+    this.messageService.getMessages().subscribe((messages) => {
+      this.messages = messages;
     });
   }
 }

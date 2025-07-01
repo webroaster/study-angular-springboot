@@ -38,4 +38,30 @@ describe('MessageService', () => {
     expect(req.request.method).toBe('GET');
     req.flush(mockMessages);
   });
+
+  it('should add a message via POST', () => {
+    const newMessage: Message = { content: 'New Message' };
+    const savedMessage: Message = { id: 3, content: 'New Message' };
+
+    service.addMessage(newMessage).subscribe(message => {
+      expect(message).toEqual(savedMessage);
+    });
+
+    const req = httpMock.expectOne('/api/messages');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(newMessage);
+    req.flush(savedMessage);
+  });
+
+  it('should delete a message via DELETE', () => {
+    const messageId = 1;
+
+    service.deleteMessage(messageId).subscribe(() => {
+      expect().nothing(); // 成功時に何も返さないことを期待
+    });
+
+    const req = httpMock.expectOne(`/api/messages/${messageId}`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+  });
 });

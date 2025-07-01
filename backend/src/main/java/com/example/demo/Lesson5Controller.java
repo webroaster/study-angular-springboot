@@ -1,0 +1,33 @@
+package com.example.demo;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/messages")
+public class Lesson5Controller {
+
+    @Autowired
+    private MessageRepository messageRepository;
+
+    // Lesson4のfindAll()はそのまま利用
+    @GetMapping
+    public List<Message> getAllMessages() {
+        return messageRepository.findAll();
+    }
+
+    // TODO: 新しいメッセージを登録するAPIを実装してください。
+    // POSTリクエストで、リクエストボディにMessageオブジェクトを受け取ります。
+    // 保存後、保存されたMessageオブジェクトを返します。
+    // ヒント: @PostMapping と @RequestBody アノテーションを使います。
+
+    // TODO: 指定されたIDのメッセージを削除するAPIを実装してください。
+    // DELETEリクエストで、パス変数としてIDを受け取ります。
+    // 削除後、HTTPステータス204 No Content を返します。
+    // ヒント: @DeleteMapping("/{id}") と @PathVariable アノテーションを使います。
+
+}

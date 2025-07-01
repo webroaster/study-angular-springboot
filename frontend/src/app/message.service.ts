@@ -16,10 +16,21 @@ export class MessageService {
 
   constructor(private http: HttpClient) { }
 
-  // TODO: "/api/messages" からメッセージのリストを取得するメソッドを実装してください。
-  // ヒント: this.http.get<Message[]>() を使います。戻り値は Observable<Message[]> 型です。
   getMessages(): Observable<Message[]> {
+    return this.http.get<Message[]>(this.apiUrl);
+  }
+
+  // TODO: 新しいメッセージを追加するメソッドを実装してください。
+  // POSTリクエストで、Messageオブジェクトを送信します。戻り値は Observable<Message> 型です。
+  addMessage(message: Message): Observable<Message> {
     // ここにコードを書いてください
-    return new Observable<Message[]>(); // この行は仮実装です。削除して書き換えてください。
+    return new Observable<Message>(); // この行は仮実装です。削除して書き換えてください。
+  }
+
+  // TODO: 指定されたIDのメッセージを削除するメソッドを実装してください。
+  // DELETEリクエストで、パスにIDを含めます。戻り値は Observable<void> 型です。
+  deleteMessage(id: number): Observable<void> {
+    // ここにコードを書いてください
+    return new Observable<void>(); // この行は仮実装です。削除して書き換えてください。
   }
 }

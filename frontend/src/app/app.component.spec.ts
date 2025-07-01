@@ -3,6 +3,7 @@ import { AppComponent } from './app.component';
 import { MessageService, Message } from './message.service';
 import { of } from 'rxjs';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FormsModule } from '@angular/forms';
 
 describe('AppComponent', () => {
   let fixture: ComponentFixture<AppComponent>;
@@ -15,12 +16,14 @@ describe('AppComponent', () => {
   ];
 
   const mockMessageService = {
-    getMessages: () => of(mockMessages)
+    getMessages: () => of(mockMessages),
+    addMessage: (message: Message) => of({ ...message, id: 3 } as Message),
+    deleteMessage: (id: number) => of(void 0) // void 0 は undefined と同じ
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppComponent, HttpClientTestingModule],
+      imports: [AppComponent, HttpClientTestingModule, FormsModule],
       providers: [{ provide: MessageService, useValue: mockMessageService }]
     }).compileComponents();
 
@@ -40,12 +43,34 @@ describe('AppComponent', () => {
     expect(component.messages).toEqual(mockMessages);
   });
 
-  it('should render messages in the template', () => {
+  it('should add a message', () => {
+    spyOn(messageService, 'addMessage').and.callThrough();
+    spyOn(component, 'loadMessages'); // loadMessagesが呼ばれることを確認するため
+
+    component.newMessageContent = 'New Test Message';
+    component.addMessage();
+
+    expect(messageService.addMessage).toHaveBeenCalledWith({ content: 'New Test Message' });
+    expect(component.newMessageContent).toBe('');
+    expect(component.loadMessages).toHaveBeenCalled();
+  });
+
+  it('should delete a message', () => {
+    spyOn(messageService, 'deleteMessage').and.callThrough();
+    spyOn(component, 'loadMessages'); // loadMessagesが呼ばれることを確認するため
+
+    const messageToDeleteId = 1;
+    component.deleteMessage(messageToDeleteId);
+
+    expect(messageService.deleteMessage).toHaveBeenCalledWith(messageToDeleteId);
+    expect(component.loadMessages).toHaveBeenCalled();
+  });
+
+  it('should render messages with delete buttons', () => {
     fixture.detectChanges(); // ngOnInitをトリガー
     const compiled = fixture.nativeElement as HTMLElement;
     const listItems = compiled.querySelectorAll('li');
     expect(listItems.length).toBe(mockMessages.length);
-    expect(listItems[0].textContent).toContain(mockMessages[0].content);
-    expect(listItems[1].textContent).toContain(mockMessages[1].content);
+    expect(listItems[0].querySelector('button')?.textContent).toContain('Delete');
   });
 });

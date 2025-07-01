@@ -1,9 +1,15 @@
 <div>
   <h1>Messages from Database</h1>
   
+  <div>
+    <input [(ngModel)]="newMessageContent" placeholder="New message content">
+    <button (click)="addMessage()">Add Message</button>
+  </div>
+
   <ul *ngIf="messages.length > 0">
     <li *ngFor="let message of messages">
       {{ message.content }}
+      <button (click)="deleteMessage(message.id)">Delete</button>
     </li>
   </ul>
   <p *ngIf="messages.length === 0">No messages found.</p>

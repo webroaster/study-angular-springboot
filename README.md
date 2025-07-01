@@ -8,6 +8,7 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 
 - [Lesson1](./documents/lesson1-summary.md)
 - [Lesson2](./documents/lesson2-summary.md)
+- [Lesson3](./documents/lesson3-summary.md)
 
 ## インストール
 

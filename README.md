@@ -2,7 +2,7 @@
 
 angular と SpringBoot の学習用リポジトリ
 
-Gemini-CLI を使ってレッスンごとにテストファイルを作成してもらい自学習を進める。
+Gemini-CLI を使ってレッスンごとにテストファイルを作成してもらい自学習を進める。（https://github.com/google-gemini/gemini-cli?tab=readme-ov-file）
 
 **進め方**
 

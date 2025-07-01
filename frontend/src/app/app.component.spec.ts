@@ -1,29 +1,42 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { AppComponent } from './app.component';
+import { HelloService } from './hello.service';
+import { of } from 'rxjs';
 
 describe('AppComponent', () => {
+  let fixture: ComponentFixture<AppComponent>;
+  let component: AppComponent;
+  let helloService: HelloService;
+
+  const mockHelloService = {
+    getHelloMessage: () => of('Hello, SpringBoot!') // モックのObservableを返す
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppComponent],
+      imports: [AppComponent, HttpClientTestingModule],
+      providers: [{ provide: HelloService, useValue: mockHelloService }] // HelloServiceをモックに置き換え
     }).compileComponents();
+
+    fixture = TestBed.createComponent(AppComponent);
+    component = fixture.componentInstance;
+    helloService = TestBed.inject(HelloService);
   });
 
   it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
+    expect(component).toBeTruthy();
   });
 
-  it(`should have the 'Hello, Angular!' title`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('Hello, Angular!');
+  it('should fetch message on init and set title', () => {
+    expect(component.title).toBe('loading...');
+    fixture.detectChanges(); // ngOnInitをトリガー
+    expect(component.title).toBe('Hello, SpringBoot!');
   });
 
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
+  it('should render title from service', () => {
+    fixture.detectChanges(); // ngOnInitをトリガー
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, Angular!');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, SpringBoot!');
   });
 });

@@ -8,5 +8,9 @@ public class Lesson1Controller {
 
     // TODO: "/api/hello"へのGETリクエストで"Hello, SpringBoot!"と返すメソッドをここに作成してください。
     // ヒント: @GetMapping("/api/hello") アノテーションを使います。メソッドの戻り値は String 型です。
+    @GetMapping("/api/hello")
+    public String hello() {
+        return "Hello, SpringBoot!";
+    }
 
 }

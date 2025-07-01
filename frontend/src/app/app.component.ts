@@ -1,12 +1,24 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
+import { HelloService } from './hello.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [CommonModule, RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrls: ['./app.component.css']
 })
-export class AppComponent {
-    title = 'app'; // TODO: この値を 'Hello, Angular!' に変更してください。
+export class AppComponent implements OnInit {
+  title = 'loading...'; // 初期表示
+
+  constructor(private helloService: HelloService) {}
+
+  // TODO: コンポーネントが初期化される(ngOnInit)タイミングで、HelloServiceのgetHelloMessage()を呼び出し、
+  // 返ってきたメッセージをthis.titleにセットする処理を実装してください。
+  // ヒント: サービスメソッドの戻り値はObservableなので、.subscribe() を使って値を受け取ります。
+  ngOnInit() {
+    // ここにコードを書いてください
+  }
 }

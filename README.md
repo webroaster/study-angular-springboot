@@ -4,28 +4,10 @@ angular と SpringBoot の学習用リポジトリ
 
 Gemini-CLI を使ってレッスンごとにテストファイルを作成してもらい自学習を進める。（https://github.com/google-gemini/gemini-cli?tab=readme-ov-file）
 
-**進め方**
+## 実績
 
-```txt
-  バックエンドの進め方:
-
-
-   1. backend ディレクトリに移動します。
-   2. ./mvnw test コマンドを実行してテストが失敗することを確認します。
-   3. /backend/src/main/java/com/example/demo/Lesson1Controller.java
-      を開き、TODOコメントに従ってコードを実装します。
-   4. 再度 ./mvnw test を実行し、テストが成功することを確認します。
-
-  フロントエンドの進め方:
-
-
-   1. frontend ディレクトリに移動します。
-   2. npm install を実行して、プロジェクトの依存関係をインストールします。
-   3. npm test を実行してテストが失敗することを確認します。
-   4. /frontend/src/app/app.component.ts
-      を開き、TODOコメントに従ってコードを実装します。
-   5. 再度 npm test を実行し、テストが成功することを確認します。
-```
+- [Lesson1](./documents/lesson1-summary.md)
+- [Lesson2](./documents/lesson2-summary.md)
 
 ## インストール
 

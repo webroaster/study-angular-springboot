@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { MessageService, Message } from './message.service';
-import { FormsModule } from '@angular/forms'; // [(ngModel)] を使うために必要
+import { FormsModule } from '@angular/forms';
+import { TodoService, Todo } from './todo.service';
 
 @Component({
   selector: 'app-root',
@@ -12,43 +12,71 @@ import { FormsModule } from '@angular/forms'; // [(ngModel)] を使うために�
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
-  messages: Message[] = [];
-  newMessageContent: string = ''; // 新しいメッセージの入力値
+  todos: Todo[] = [];
+  newTodoTitle: string = '';
+  newTodoDueDate: string = ''; // YYYY-MM-DD 形式
 
-  constructor(private messageService: MessageService) {}
+  editingTodo: Todo | null = null; // 編集中のTODO
 
-  ngOnInit() {
-    this.loadMessages();
+  constructor(private todoService: TodoService) {}
+
+  ngOnInit(): void {
+    this.loadTodos();
   }
 
-  loadMessages(): void {
-    this.messageService.getMessages().subscribe((messages) => {
-      this.messages = messages;
+  loadTodos(): void {
+    // TodoServiceを使ってすべてのTODOを取得し、this.todosにセット
+    this.todoService.getTodos().subscribe((todos) => {
+      this.todos = todos;
     });
   }
 
-  // TODO: 新しいメッセージを追加するメソッドを実装してください。
-  // this.newMessageContent を使ってMessageオブジェクトを作成し、MessageServiceのaddMessage()を呼び出します。
-  // 成功したら、this.newMessageContent をクリアし、loadMessages() を呼び出してリストを更新します。
-  addMessage(): void {
-    // ここにコードを書いてください
-    const newMessage: Message = {
-      content: this.newMessageContent,
+  addTodo(): void {
+    // newTodoTitleとnewTodoDueDateを使って新しいTODOを作成し、TodoServiceで追加
+    const newTodo: Todo = {
+      title: this.newTodoTitle,
+      dueDate: this.newTodoDueDate ?? null,
+      completed: false,
     };
-    this.messageService.addMessage(newMessage).subscribe(() => {
-      this.newMessageContent = '';
-      this.loadMessages();
+    this.todoService.addTodo(newTodo).subscribe(() => {
+      this.newTodoTitle = '';
+      this.newTodoDueDate = '';
+      this.loadTodos();
     });
   }
 
-  // TODO: メッセージを削除するメソッドを実装してください。
-  // MessageServiceのdeleteMessage()を呼び出し、成功したら loadMessages() を呼び出してリストを更新します。
-  deleteMessage(id: number | undefined): void {
-    // ここにコードを書いてください
+  editTodo(todo: Todo): void {
+    // スプレッド構文で新しいオブジェクトを作成し、編集中のTODOとしてセットする
+    this.editingTodo = { ...todo };
+  }
+
+  updateTodo(): void {
+    // editingTodoを使ってTODOを更新し、TodoServiceで更新
+    const updateTodo: Todo = {
+      id: this.editingTodo?.id,
+      title: this.editingTodo?.title ?? '',
+      dueDate: this.editingTodo?.dueDate ?? '',
+      completed: this.editingTodo?.completed ?? false,
+    };
+    this.todoService.updateTodo(updateTodo).subscribe(() => {
+      this.editingTodo = null;
+      this.loadTodos();
+    });
+  }
+
+  deleteTodo(id: number | undefined): void {
+    // 指定されたIDのTODOを削除し、TodoServiceで削除
     if (id) {
-      this.messageService.deleteMessage(id).subscribe(() => {
-        this.loadMessages();
+      this.todoService.deleteTodo(id).subscribe(() => {
+        this.loadTodos();
       });
     }
+  }
+
+  toggleCompleted(todo: Todo): void {
+    // TODOの完了状態を切り替え、TodoServiceで更新
+    this.todoService.updateTodo(todo).subscribe(() => {
+      this.loadTodos();
+    });
   }
 }

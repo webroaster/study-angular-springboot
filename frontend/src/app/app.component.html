@@ -1,16 +1,44 @@
-<div>
-  <h1>Messages from Database</h1>
-  
+<div class="container">
+  <h1>Todo List</h1>
+
+  <!-- Add Todo Form -->
   <div>
-    <input [(ngModel)]="newMessageContent" placeholder="New message content">
-    <button (click)="addMessage()">Add Message</button>
+    <input
+      [(ngModel)]="newTodoTitle"
+      placeholder="Todo Title"
+      class="todoInput"
+    />
+    <input type="date" [(ngModel)]="newTodoDueDate" />
+    <button (click)="addTodo()">Add Todo</button>
   </div>
 
-  <ul *ngIf="messages.length > 0">
-    <li *ngFor="let message of messages">
-      {{ message.content }}
-      <button (click)="deleteMessage(message.id)">Delete</button>
+  <hr />
+
+  <!-- Todo List -->
+  <ul *ngIf="todos.length > 0">
+    <li *ngFor="let todo of todos">
+      <input
+        type="checkbox"
+        [(ngModel)]="todo.completed"
+        (change)="toggleCompleted(todo)"
+      />
+      <span [class.completed]="todo.completed">{{ todo.title }}</span>
+      <span class="due-date"> (Due: {{ todo.dueDate }})</span>
+      <button (click)="editTodo(todo)">Edit</button>
+      <button (click)="deleteTodo(todo.id)">Delete</button>
     </li>
   </ul>
-  <p *ngIf="messages.length === 0">No messages found.</p>
+  <p *ngIf="todos.length === 0">No todos yet. Add one!</p>
+
+  <hr />
+
+  <!-- Edit Todo Form -->
+  <div *ngIf="editingTodo">
+    <h2>Edit Todo</h2>
+    <input [(ngModel)]="editingTodo.title" />
+    <input type="date" [(ngModel)]="editingTodo.dueDate" />
+    <input type="checkbox" [(ngModel)]="editingTodo.completed" />
+    <button (click)="updateTodo()">Save Changes</button>
+    <button (click)="editingTodo = null">Cancel</button>
+  </div>
 </div>

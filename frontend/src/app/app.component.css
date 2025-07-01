@@ -1,0 +1,140 @@
+/* TODOリスト画面をより見やすく、現代的なデザインに調整 */
+
+body {
+  background: #f4f6fa;
+  font-family: "Segoe UI", "Meiryo", sans-serif;
+}
+
+.container {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 1em;
+}
+
+h1 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.completed {
+  text-decoration: line-through;
+  color: #b0b0b0;
+  opacity: 0.7;
+}
+
+.due-date {
+  font-size: 0.9em;
+  color: #888;
+  margin-left: 8px;
+}
+
+input[type="text"],
+input[type="date"] {
+  padding: 10px 12px;
+  margin-right: 8px;
+  border: 1px solid #bfc9d1;
+  border-radius: 6px;
+  font-size: 1em;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.todoInput {
+  font-size: 1.4rem;
+  padding: 0.4em;
+  width: 50%;
+  margin-right: 8px;
+  border: 1px solid #bfc9d1;
+  border-radius: 6px;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+button {
+  padding: 9px 16px;
+  background: linear-gradient(90deg, #007bff 60%, #0056b3 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 6px;
+  font-size: 1em;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+  background: linear-gradient(90deg, #0056b3 60%, #007bff 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+li {
+  background: #fff;
+  border: 1px solid #e3e7ed;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.2s;
+}
+
+li:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+
+li button {
+  margin-left: 8px;
+  margin-right: 0;
+  padding: 7px 12px;
+  font-size: 0.95em;
+  background: #e74c3c;
+  background: linear-gradient(90deg, #e74c3c 60%, #c0392b 100%);
+}
+
+li button:first-of-type {
+  background: #27ae60;
+  background: linear-gradient(90deg, #27ae60 60%, #219150 100%);
+}
+
+li button:hover {
+  filter: brightness(1.08);
+}
+
+li input[type="checkbox"] {
+  margin-right: 14px;
+  width: 18px;
+  height: 18px;
+  accent-color: #007bff;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  ul {
+    max-width: 98vw;
+  }
+  li {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 8px;
+  }
+  li button {
+    margin-left: 0;
+    margin-top: 6px;
+  }
+}

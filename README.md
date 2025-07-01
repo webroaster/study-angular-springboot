@@ -6,10 +6,10 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 
 ## 実績
 
-- [Lesson1](./documents/lesson1-summary.md)
-- [Lesson2](./documents/lesson2-summary.md)
-- [Lesson3](./documents/lesson3-summary.md)
-- [Lesson4](./documents/lesson4-summary.md)
+- [Lesson 1: 基本のセットアップ](./documents/lesson1-summary.md)
+- [Lesson 2: フロントエンドとバックエンドの連携](./documents/lesson2-summary.md)
+- [Lesson 3: データの送信と表示](./documents/lesson3-summary.md)
+- [Lesson 4: データベースとの連携（一覧表示）](./documents/lesson4-summary.md)
 
 ## インストール
 

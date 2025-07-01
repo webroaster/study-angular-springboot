@@ -1,42 +1,50 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { AppComponent } from './app.component';
-import { HelloService } from './hello.service';
+import { GreetService, GreetResponse } from './greet.service';
 import { of } from 'rxjs';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('AppComponent', () => {
   let fixture: ComponentFixture<AppComponent>;
   let component: AppComponent;
-  let helloService: HelloService;
+  let greetService: GreetService;
 
-  const mockHelloService = {
-    getHelloMessage: () => of('Hello, SpringBoot!') // モックのObservableを返す
+  const mockGreetService = {
+    getGreeting: (name: string) => of({ message: `Hello, ${name}!` } as GreetResponse)
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent, HttpClientTestingModule],
-      providers: [{ provide: HelloService, useValue: mockHelloService }] // HelloServiceをモックに置き換え
+      providers: [{ provide: GreetService, useValue: mockGreetService }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AppComponent);
     component = fixture.componentInstance;
-    helloService = TestBed.inject(HelloService);
+    greetService = TestBed.inject(GreetService);
   });
 
   it('should create the app', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should fetch message on init and set title', () => {
-    expect(component.title).toBe('loading...');
-    fixture.detectChanges(); // ngOnInitをトリガー
-    expect(component.title).toBe('Hello, SpringBoot!');
+  it('should call greet service and set message on greet()', () => {
+    const testName = 'Taro';
+    spyOn(greetService, 'getGreeting').and.callThrough();
+
+    component.greet(testName);
+
+    expect(greetService.getGreeting).toHaveBeenCalledWith(testName);
+    expect(component.greetingMessage).toBe(`Hello, ${testName}!`);
   });
 
-  it('should render title from service', () => {
-    fixture.detectChanges(); // ngOnInitをトリガー
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, SpringBoot!');
+  it('should display the greeting message in the template', () => {
+    const testName = 'Jiro';
+    component.greet(testName);
+
+    fixture.detectChanges(); // ビューを更新
+
+    const h2 = fixture.nativeElement.querySelector('h2');
+    expect(h2.textContent).toContain(`Hello, ${testName}!`);
   });
 });

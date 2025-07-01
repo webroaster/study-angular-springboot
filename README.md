@@ -13,6 +13,11 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 - [Lesson 5: データの追加と削除](./documents/lesson5-summary.md)
 - [TODO アプリ作成](./documents/todoApp.md)
 
+## 学習用
+
+- [angular: レンダリングフロー](./documents/angular/rendering.md)
+- [angular: 主要ファイル](./documents/angular/files.md)
+
 ## インストール
 
 ```sh

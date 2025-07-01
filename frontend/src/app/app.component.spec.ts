@@ -1,50 +1,51 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { AppComponent } from './app.component';
-import { GreetService, GreetResponse } from './greet.service';
+import { MessageService, Message } from './message.service';
 import { of } from 'rxjs';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('AppComponent', () => {
   let fixture: ComponentFixture<AppComponent>;
   let component: AppComponent;
-  let greetService: GreetService;
+  let messageService: MessageService;
 
-  const mockGreetService = {
-    getGreeting: (name: string) => of({ message: `Hello, ${name}!` } as GreetResponse)
+  const mockMessages: Message[] = [
+    { id: 1, content: 'Mock Message 1' },
+    { id: 2, content: 'Mock Message 2' }
+  ];
+
+  const mockMessageService = {
+    getMessages: () => of(mockMessages)
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent, HttpClientTestingModule],
-      providers: [{ provide: GreetService, useValue: mockGreetService }]
+      providers: [{ provide: MessageService, useValue: mockMessageService }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(AppComponent);
     component = fixture.componentInstance;
-    greetService = TestBed.inject(GreetService);
+    messageService = TestBed.inject(MessageService);
   });
 
   it('should create the app', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should call greet service and set message on greet()', () => {
-    const testName = 'Taro';
-    spyOn(greetService, 'getGreeting').and.callThrough();
-
-    component.greet(testName);
-
-    expect(greetService.getGreeting).toHaveBeenCalledWith(testName);
-    expect(component.greetingMessage).toBe(`Hello, ${testName}!`);
+  it('should load messages on init', () => {
+    spyOn(messageService, 'getMessages').and.callThrough();
+    fixture.detectChanges(); // ngOnInitをトリガー
+    expect(messageService.getMessages).toHaveBeenCalled();
+    expect(component.messages).toEqual(mockMessages);
   });
 
-  it('should display the greeting message in the template', () => {
-    const testName = 'Jiro';
-    component.greet(testName);
-
-    fixture.detectChanges(); // ビューを更新
-
-    const h2 = fixture.nativeElement.querySelector('h2');
-    expect(h2.textContent).toContain(`Hello, ${testName}!`);
+  it('should render messages in the template', () => {
+    fixture.detectChanges(); // ngOnInitをトリガー
+    const compiled = fixture.nativeElement as HTMLElement;
+    const listItems = compiled.querySelectorAll('li');
+    expect(listItems.length).toBe(mockMessages.length);
+    expect(listItems[0].textContent).toContain(mockMessages[0].content);
+    expect(listItems[1].textContent).toContain(mockMessages[1].content);
   });
 });

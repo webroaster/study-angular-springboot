@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { HelloService } from './hello.service';
+import { GreetService } from './greet.service';
 
 @Component({
   selector: 'app-root',
@@ -10,18 +10,19 @@ import { HelloService } from './hello.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
-export class AppComponent implements OnInit {
-  title = 'loading...'; // 初期表示
+export class AppComponent {
+  greetingMessage: string | null = null;
 
-  constructor(private helloService: HelloService) {}
+  constructor(private greetService: GreetService) {}
 
-  // TODO: コンポーネントが初期化される(ngOnInit)タイミングで、HelloServiceのgetHelloMessage()を呼び出し、
-  // 返ってきたメッセージをthis.titleにセットする処理を実装してください。
-  // ヒント: サービスメソッドの戻り値はObservableなので、.subscribe() を使って値を受け取ります。
-  ngOnInit() {
+  // TODO: ボタンがクリックされた時に呼び出されるgreetメソッドを実装してください。
+  // GreetServiceのgetGreeting()を呼び出し、返ってきたレスポンスのmessageプロパティを
+  // this.greetingMessageにセットします。
+  // ヒント: .subscribe() を使ってレスポンスを受け取ります。
+  greet(name: string): void {
     // ここにコードを書いてください
-    this.helloService.getHelloMessage().subscribe((message) => {
-      this.title = message;
+    this.greetService.getGreeting(name).subscribe((response) => {
+      this.greetingMessage = response.message;
     });
   }
 }

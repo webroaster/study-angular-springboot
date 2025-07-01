@@ -1,0 +1,12 @@
+<div>
+  <h1>Greeting App</h1>
+  
+  <div>
+    <input #nameInput placeholder="Enter your name">
+    <button (click)="greet(nameInput.value)">Greet Me!</button>
+  </div>
+  
+  <div *ngIf="greetingMessage">
+    <h2>{{ greetingMessage }}</h2>
+  </div>
+</div>

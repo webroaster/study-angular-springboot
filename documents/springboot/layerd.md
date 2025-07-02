@@ -25,9 +25,9 @@ graph TD
   end
 
   subgraph "サーバーサイドアプリケーション"
-    A["**プレゼンテーション層 (Presentation Layer)**\n役割: リクエスト受付、レスポンス返却\n担当: Controller"]
-    B["**ビジネスロジック層 (Business Logic Layer)**\n役割: アプリケーションの核となる処理\n担当: Service"]
-    C["**データアクセス層 (Data Access Layer)**\n役割: データベースとのやり取り\n担当: Repository, Mapper, DAO"]
+    A["**プレゼンテーション層 (Presentation Layer)**<br>役割: リクエスト受付、レスポンス返却<br>担当: Controller"]
+    B["**ビジネスロジック層 (Business Logic Layer)**<br>役割: アプリケーションの核となる処理<br>担当: Service"]
+    C["**データアクセス層 (Data Access Layer)**<br>役割: データベースとのやり取り<br>担当: Repository, Mapper, DAO"]
   end
 
   subgraph "データストア"

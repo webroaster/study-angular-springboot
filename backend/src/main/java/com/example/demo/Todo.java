@@ -1,16 +1,16 @@
 package com.example.demo;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+// import jakarta.persistence.Entity;
+// import jakarta.persistence.GeneratedValue;
+// import jakarta.persistence.GenerationType;
+// import jakarta.persistence.Id;
 import java.time.LocalDate;
 
-@Entity
+// @Entity // MyBatis 移行により不要
 public class Todo {
 
-    @Id // このフィールドが主キー
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // IDがDBによって自動生成される
+    // @Id // MyBatis 移行により不要
+    //  @GeneratedValue(strategy = GenerationType.IDENTITY) // MyBatis 移行により不要
     private Long id;
     private String title;
     private LocalDate dueDate;

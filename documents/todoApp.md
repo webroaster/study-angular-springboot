@@ -4,6 +4,9 @@
 
 このドキュメントは、Angular と Spring Boot を使用して開発した TODO アプリケーションの技術的な詳細と学習内容をまとめたものです。
 
+追記:
+**Spring Data JPA から MyBatis へ移行**した
+
 ## 技術スタック
 
 ### フロントエンド
@@ -22,7 +25,8 @@
 - **ビルドツール:** Maven
 - **主なライブラリ:**
   - **Spring Web:** RESTful API を構築するために使用
-  - **Spring Data JPA:** データベースアクセスのための永続化 API
+  - ~~**Spring Data JPA:** データベースアクセスのための永続化 API~~
+  - 追記: **データマッパー:** **MyBatis** (↑ JPA から変更)
   - **H2 Database:** 開発用のインメモリデータベース
   - **Jackson:** Java オブジェクトと JSON の相互変換
 
@@ -96,3 +100,44 @@
   - **Setter とは？**
     - 役割: クラスのプライベートなフィールドの値を設定する（変更する）ためのメソッド
     - 命名規則: 通常、set の後ろにフィールド名をつづける（例: `setTitle(String newTitle)`）
+
+## 追記: JPA から MyBatis への移行による変更点と学び
+
+今回の改修の目的は、SQL をより直接的にコントロールできる MyBatis への理解を深めることでした。以下に主要な変更点と、そこから得られた学びをまとめます。
+
+### 1. 依存関係の変更 (`pom.xml`)
+
+- **削除** `spring-boot-starter-data-jpa` の依存関係を削除した
+- **追加** `mybatis-spring-boot-starter` の依存関係を追加
+- **学び** プロジェクトのデータアクセス技術を切り替える際は、まず `pom.xml` で部品を入れ替えることが第一段階
+
+### 2. データアクセス層の実装変更
+
+- **`Repository` から `Mapper` へ:**
+  - Spring Data JPA の `JpaRespository` インターフェースを削除
+  - 代わりに `@Mapper` アノテーションをつけた `TodoMapper` イン t なーフェースを作成
+- **SQL の明示的な記述:**
+  - `JpaRepository` がメソッド名から自動生成していた SQL を、`@Select`、`@Insert`, `@Update`, `@Delete` アノテーションを使って `TodoMapper` 内に直接記述した
+- **学び:**
+  - MyBatis では、実行される SQL を開発者が完全に制御できる
+  - これにより、複雑なクエリやチューニングが必要な時に対応できる
+
+### 3. テーブルスキーマの管理 (`schema.sql`)
+
+- JPA の `ddl-auto` 機能（エンティティからのテーブル自動生成）が使えなくなったため、`src/main/resources/` に `schema.sql` ファイルを作成
+- このファイルに `CREATE TABLE` 文を記述することで、アプリ起動時に H2 データベース上にテーブルが作成されるようになる
+- **学び:**
+  - データアクセス層の技術によっては、DB スキーマの管理方法も変わることを理解した
+
+### 4. 命名規則の不一致対応 (`application.properties`)
+
+- **問題:** Java のプロパティ名（例: `dueDate`）と DB のカラム名（例: `due_date`）の命名規則の違い（キャメルケース vs スネークケース）により、`dueDate` が `null` で登録されるバグが発生
+- **解決策:** `application.properties` に `mybatis.configuration.map-underscore-to-camel-case=true` を追加した
+- **学び:** この設定により、MyBatis が命名規則の違いを吸収し、自動でマッピングしてくれることを学んだ
+
+### 5. テストコードの修正 (`TodoControllerTest.java`)
+
+- `@MockBean` の対象を `TodoRepository` から `TodoMapper` に変更
+- Mapper の `save`/`update` メソッドは戻り値が `void` のため、Mockito の `when(...).thenReturn(...)` が使えなくなった
+- 代わりに `doAnswer(...)` や `doNothing()` を使い、「メソッドが呼ばれた際の振る舞い」を定義する方法でテストを修正した
+- **学び:** 依存するコンポーネントの仕様が変われば、それをモックするテストコードの書き方も変える必要があることを学んだ

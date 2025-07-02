@@ -115,7 +115,7 @@
 
 - **`Repository` から `Mapper` へ:**
   - Spring Data JPA の `JpaRespository` インターフェースを削除
-  - 代わりに `@Mapper` アノテーションをつけた `TodoMapper` イン t なーフェースを作成
+  - 代わりに `@Mapper` アノテーションをつけた `TodoMapper` インターフェースを作成
 - **SQL の明示的な記述:**
   - `JpaRepository` がメソッド名から自動生成していた SQL を、`@Select`、`@Insert`, `@Update`, `@Delete` アノテーションを使って `TodoMapper` 内に直接記述した
 - **学び:**

@@ -5,7 +5,7 @@ Angular アプリケーションは、以下のステップで起動し、画面
 1.  `index.html` の読み込み:
 
     - ブラウザは最初に frontend/src/index.html を読み込みます。このファイルが Web アプリケーションの土台となります。
-    - <body> タグの中に <app-root></app-root> という見慣れないタグがあります。これがAngularアプリケーションが挿入される場所（ホスト要素）になります。
+    - `<body>` タグの中に `<app-root></app-root>` という見慣れないタグがあります。これが Angular アプリケーションが挿入される場所（ホスト要素）になります。
 
 ```html
 <!DOCTYPE html>
@@ -41,10 +41,10 @@ bootstrapApplication(AppComponent, appConfig).catch((err) => console.error(err))
 
     - Angular は AppComponent (frontend/src/app/app.component.ts) をインスタンス化します。
     - `@Component` デコレータに注目してください。
-      - `selector: 'app-root'`: このコンポーネントがどの HTML タグに対応するかを定義します。index.html の <app-root> と一致しますね。
+      - `selector: 'app-root'`: このコンポーネントがどの HTML タグに対応するかを定義します。index.html の `<app-root>` と一致しますね。
       - `templateUrl: './app.component.html`': このコンポーネントが表示する HTML テンプレートの場所。
       - `styleUrls: ['./app.component.css']`: このコンポーネントに適用される CSS の場所。
-    - Angular は app.component.html の内容をコンパイルし、index.html の <app-root> タグの中にレンダリングします。
+    - Angular は app.component.html の内容をコンパイルし、index.html の `<app-root>` タグの中にレンダリングします。
 
 ```ts
 import { Component, OnInit } from '@angular/core';
@@ -108,15 +108,15 @@ export class AppComponent implements OnInit {
 
 React との比較
 
-| 機能 | Angular | React |
-| :-- | :-- | :-- |
-| エントリーポイント | main.ts で bootstrapApplication を呼び出す | index.js で ReactDOM.createRoot().render() を呼び出す |
-| ルート要素 | index.html の `<app-root>` | index.html の `<div id="root">` |
-| コンポーネント | `@Component` デコレータでメタデータ（HTML,CSS）を定義した TypeScript クラス | JSX を返す JavaScript 関数またはクラス |
-| テンプレート | HTML ファイル (.html) と TypeScript クラス (.ts) が分離している | JSX を使い、ロジックとビューが同じファイルに混在することが多い |
-| データ管理 | コンポーネントのプロパティとして管理。双方向データバインディング(`[(ngModel)]`) も可能 | useState フックなどで状態 (state)を管理。単方向のデータフローが基本 |
-| 変更検知 | Zone.js による自動的な変更検知 | useState のセッター関数 (setXXX)が呼ばれると再レンダリングがトリガーされる |
-| エコシステム | ルーティング、HTTP クライアント、フォーム管理などが公式パッケージとして提供されるフルスタックなフレームワーク | ルーティング (react-router-dom) や状態管理 (Redux,Zustand) などはサードパーティのライブラリを組み合わせて使うことが多い |
+| 機能               | Angular                                                                                                       | React                                                                                                                   |
+| :----------------- | :------------------------------------------------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------------- |
+| エントリーポイント | main.ts で bootstrapApplication を呼び出す                                                                    | index.js で ReactDOM.createRoot().render() を呼び出す                                                                   |
+| ルート要素         | index.html の `<app-root>`                                                                                    | index.html の `<div id="root">`                                                                                         |
+| コンポーネント     | `@Component` デコレータでメタデータ（HTML,CSS）を定義した TypeScript クラス                                   | JSX を返す JavaScript 関数またはクラス                                                                                  |
+| テンプレート       | HTML ファイル (.html) と TypeScript クラス (.ts) が分離している                                               | JSX を使い、ロジックとビューが同じファイルに混在することが多い                                                          |
+| データ管理         | コンポーネントのプロパティとして管理。双方向データバインディング(`[(ngModel)]`) も可能                        | useState フックなどで状態 (state)を管理。単方向のデータフローが基本                                                     |
+| 変更検知           | Zone.js による自動的な変更検知                                                                                | useState のセッター関数 (setXXX)が呼ばれると再レンダリングがトリガーされる                                              |
+| エコシステム       | ルーティング、HTTP クライアント、フォーム管理などが公式パッケージとして提供されるフルスタックなフレームワーク | ルーティング (react-router-dom) や状態管理 (Redux,Zustand) などはサードパーティのライブラリを組み合わせて使うことが多い |
 
 まとめ
 

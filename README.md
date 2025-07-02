@@ -21,6 +21,7 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 - [SpringBoot: 基本構成](./documents/springboot/base.md)
 - [SpringBoot: Controller の役割とリクエスト処理の流れ](./documents/springboot/request-flow.md)
 - [SpringBoot: Service 層と Repository 層の役割分担](./documents/springboot/service.md)
+- [SpringBoot: pom.xml の役割](./documents/springboot/pom.md)
 
 ## インストール
 

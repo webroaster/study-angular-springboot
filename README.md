@@ -17,6 +17,7 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 
 - [angular: レンダリングフロー](./documents/angular/rendering.md)
 - [angular: 主要ファイル](./documents/angular/files.md)
+- [angular: デプロイ周り](./documents/angular/deploy.md)
 
 ## インストール
 

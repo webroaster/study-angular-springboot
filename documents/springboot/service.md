@@ -56,16 +56,16 @@
 ```mermaid
 graph TD
   subgraph "Presentation Layer (プレゼンテーション層)"
-    Controller["**TodoController**\n・HTTPリクエスト/レスポンスの管理\n・リクエストデータの検証\n・Serviceの呼び出し"]
+    Controller["**TodoController**<br>・HTTPリクエスト/レスポンスの管理<br>・リクエストデータの検証<br>・Serviceの呼び出し"]
   end
 
   subgraph "Business Logic Layer (ビジネスロジック層)"
-    Service["**TodoService**\n・ビジネスロジックの実装\n・トランザクション管理\n・Repositoryの呼び出し"]
+    Service["**TodoService**<br>・ビジネスロジックの実装<br>・トランザクション管理<br>・Repositoryの呼び出し"]
   end
 
   subgraph "Data Access Layer (データアクセス層)"
-    Repository["**TodoRepository**\n・データベースとのCRUD操作"]
-    Entity["**Todo (Entity)**\n・データベースのテーブル構造を表現"]
+    Repository["**TodoRepository**<br>・データベースとのCRUD操作"]
+    Entity["**Todo (Entity)**<br>・データベースのテーブル構造を表現"]
   end
 
   subgraph "Database"

@@ -60,7 +60,7 @@ graph TD
 
     subgraph "Private Subnet"
       ASG["Auto Scaling Group"]
-      DB["RDS / Cloud SQL\nマネージドデータベース"]
+      DB["RDS / Cloud SQL<br>マネージドデータベース"]
     end
 
     ASG --> DB
@@ -69,8 +69,8 @@ graph TD
 
   subgraph ASG
     direction LR
-    EC2_1["EC2 Instance 1\njava -jar app.jar"]
-    EC2_2["EC2 Instance 2\njava -jar app.jar"]
+    EC2_1["EC2 Instance 1<br>java -jar app.jar"]
+    EC2_2["EC2 Instance 2<br>java -jar app.jar"]
     EC2_3["..."]
   end
 
@@ -103,8 +103,8 @@ graph TD
     end
 
     subgraph "Private Subnet"
-      Fargate["**Fargate / Cloud Run Service**\nコンテナオーケストレーション"]
-      DB["RDS / Cloud SQL\nマネージドデータベース"]
+      Fargate["**Fargate / Cloud Run Service**<br>コンテナオーケストレーション"]
+      DB["RDS / Cloud SQL<br>マネージドデータベース"]
     end
 
     Fargate --> DB
@@ -113,15 +113,15 @@ graph TD
 
   subgraph Fargate
     direction LR
-    Container1["Container 1\napp.jar"]
-    Container2["Container 2\napp.jar"]
+    Container1["Container 1<br>app.jar"]
+    Container2["Container 2<br>app.jar"]
     Container3["..."]
   end
 
   subgraph "CI/CD Pipeline"
     direction LR
-    Code["ソースコード"] --> Build["ビルド\nmvn package"] --> Dockerize["Dockerイメージ作成"]
-    Dockerize --> Registry["ECR / GCR\nコンテナレジストリ"]
+    Code["ソースコード"] --> Build["ビルド<br>mvn package"] --> Dockerize["Dockerイメージ作成"]
+    Dockerize --> Registry["ECR / GCR<br>コンテナレジストリ"]
   end
 
   Registry -- "イメージをデプロイ" --> Fargate
@@ -149,13 +149,13 @@ graph TD
 ```mermaid
 graph TD
   User[👤 ユーザー] -->|HTTPS| Firewall["ファイアウォール"]
-  Firewall --> LB["ロードバランサー\nNginx / F5"]
+  Firewall --> LB["ロードバランサー<br>Nginx / F5"]
 
   subgraph "自社データセンター"
-    LB --> AppServer1["App Server 1 (VM)\njava -jar app.jar"]
-    LB --> AppServer2["App Server 2 (VM)\njava -jar app.jar"]
+    LB --> AppServer1["App Server 1 (VM)<br>java -jar app.jar"]
+    LB --> AppServer2["App Server 2 (VM)<br>java -jar app.jar"]
 
-    AppServer1 --> DBServer["データベースサーバー\nOracle / PostgreSQL"]
+    AppServer1 --> DBServer["データベースサーバー<br>Oracle / PostgreSQL"]
     AppServer2 --> DBServer
   end
 

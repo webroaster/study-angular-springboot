@@ -76,7 +76,7 @@ graph TD
 
     subgraph "コンテナサービス (例: ECS, Fargate, Cloud Run, Kubernetes)"
       direction LR
-      NginxContainer["**Nginxコンテナ**\nDockerfileで静的ファイルを含む\nイメージから起動し、ファイルを配信"]
+      NginxContainer["**Nginxコンテナ**<br>Dockerfileで静的ファイルを含む<br>イメージから起動し、ファイルを配信"]
     end
   end
 
@@ -122,8 +122,8 @@ graph TD
   end
 
   subgraph "自社データセンター (オンプレミス)"
-    Proxy["**ロードバランサー / リバースプロキシ**\n(Nginx, Apacheなど)"]
-    WebServer["**Webサーバー**\n(Nginx, Apacheなど)\n/var/www/html/myapp に\n静的ファイルを配置して配信"]
+    Proxy["**ロードバランサー / リバースプロキシ**<br>(Nginx, Apacheなど)"]
+    WebServer["**Webサーバー**<br>(Nginx, Apacheなど)<br>/var/www/html/myapp に<br>静的ファイルを配置して配信"]
   end
 
   User -- "https://myapp.com にアクセス" --> Proxy

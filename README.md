@@ -29,7 +29,7 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 - [SpringBoot: pom.xml の役割](./documents/springboot/pom.md)
 - [SpringBoot: mvnw の役割](./documents/springboot/mvnw.md)
 - [SpringBoot: デプロイ周り](./documents/springboot/deploy.md)
-- [SpringBoot: 改装型アーキテクチャ](./documents/springboot/layerd.md)
+- [SpringBoot: 階層型アーキテクチャ](./documents/springboot/layerd.md)
 
 ## インストール
 

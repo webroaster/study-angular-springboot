@@ -11,7 +11,7 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 - [Lesson 3: データの送信と表示](./documents/lesson3-summary.md)
 - [Lesson 4: データベースとの連携（一覧表示）](./documents/lesson4-summary.md)
 - [Lesson 5: データの追加と削除](./documents/lesson5-summary.md)
-- [TODO アプリ作成](./documents/todoApp.md)
+- [TODO アプリ作成（JPA から MyBatis に移行）](./documents/todoApp.md)
 
 ## 学習用
 

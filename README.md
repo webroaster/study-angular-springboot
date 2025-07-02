@@ -15,14 +15,20 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 
 ## 学習用
 
+### Angular
+
 - [angular: レンダリングフロー](./documents/angular/rendering.md)
 - [angular: 主要ファイル](./documents/angular/files.md)
 - [angular: デプロイ周り](./documents/angular/deploy.md)
+
+### SpringBoot
+
 - [SpringBoot: 基本構成](./documents/springboot/base.md)
 - [SpringBoot: Controller の役割とリクエスト処理の流れ](./documents/springboot/request-flow.md)
 - [SpringBoot: Service 層と Repository 層の役割分担](./documents/springboot/service.md)
 - [SpringBoot: pom.xml の役割](./documents/springboot/pom.md)
 - [SpringBoot: mvnw の役割](./documents/springboot/mvnw.md)
+- [SpringBoot: デプロイ周り](./documents/springboot/deploy.md)
 
 ## インストール
 

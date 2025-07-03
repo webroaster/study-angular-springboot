@@ -169,6 +169,8 @@ docker run --name 21.3.0-xe \
 -v /Users/xxxxx/oracle/21.3.0-ex:/opt/oracle/aradata container-registry.oracle.com/database/express:21.3.0-xe
 ```
 
+1 時間くらい経っても起動しない...
+
 ## `colima` 停止
 
 ```sh

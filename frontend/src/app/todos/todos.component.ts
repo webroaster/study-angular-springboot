@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TodoService, Todo } from '../services/todo.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-todos',
@@ -17,7 +18,7 @@ export class TodosComponent implements OnInit {
 
   editingTodo: Todo | null = null; // 編集中のTODO
 
-  constructor(private todoService: TodoService) {}
+  constructor(private todoService: TodoService, private router: Router) {}
 
   ngOnInit(): void {
     this.loadTodos();
@@ -77,5 +78,10 @@ export class TodosComponent implements OnInit {
     this.todoService.updateTodo(todo).subscribe(() => {
       this.loadTodos();
     });
+  }
+
+  // ユーザー管理ページへ遷移
+  users(): void {
+    this.router.navigate(['/users']);
   }
 }

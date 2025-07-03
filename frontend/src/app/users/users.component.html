@@ -23,13 +23,18 @@
     <button (click)="addUser()">新規登録</button>
   </div>
 
+  <div style="text-align: right; margin-bottom: 1rem">
+    <button (click)="todos()">TODO管理画面へ</button>
+  </div>
+
   <hr />
 
   <!-- ユーザー一覧 -->
   <ul *ngIf="users.length > 0">
     <li *ngFor="let user of users">
       <span
-        >{{ user.username }}（{{ user.displayName }}）[{{ user.status }}]</span
+        ><span style="font-weight: bold">{{ user.displayName }}</span>
+        ステータス: [{{ user.status }}]</span
       >
       <button (click)="editUser(user)">編集</button>
       <button (click)="deleteUser(user.id)">削除</button>

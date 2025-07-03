@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { User, UserService } from '../services/user.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-users',
@@ -19,7 +20,7 @@ export class UsersComponent implements OnInit {
 
   editingUser: User | null = null;
 
-  constructor(private userService: UserService) {}
+  constructor(private userService: UserService, private router: Router) {}
 
   ngOnInit(): void {
     this.loadUsers();
@@ -71,5 +72,10 @@ export class UsersComponent implements OnInit {
         this.loadUsers();
       });
     }
+  }
+
+  // TODOページへ遷移
+  todos(): void {
+    this.router.navigate(['/todos']);
   }
 }

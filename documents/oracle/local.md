@@ -96,7 +96,7 @@ brew upgrade lima colima lima-additional-guestagents
 再度 `colima` 起動
 
 ```sh
-❯ colima start --cpu 2 --memory 2 --disk 100 -a x86_64
+colima start --cpu 2 --memory 2 --disk 100 -a x86_64
 INFO[0000] starting colima
 INFO[0000] runtime: docker
 INFO[0002] creating and starting ...                     context=vm
@@ -128,4 +128,49 @@ default    Running    x86_64    2       2GiB      100GiB    docker
 
 ```sh
 docker pull container-registry.oracle.com/database/express:21.3.0-xe
+21.3.0-xe: Pulling from database/express
+2318ff572021: Pull complete
+c6250726c822: Pull complete
+33ac5ea7f7dd: Pull complete
+753e0fae7e64: Pull complete
+Digest: sha256:dcf137aab02d5644aaf9299aae736e4429f9bfdf860676ff398a1458ab8d23f2
+Status: Downloaded newer image for container-registry.oracle.com/database/express:21.3.0-xe
+container-registry.oracle.com/database/express:21.3.0-xe
+```
+
+## コンテナ起動
+
+`Colima` (= Linux 仮想マシン)が Mac のファイルシステムにアクセスできるよう明示的にディレクトリを許可する。
+
+```sh
+colima stop
+INFO[0000] stopping colima
+INFO[0000] stopping ...                                  context=docker
+INFO[0007] stopping ...                                  context=vm
+INFO[0012] done
+```
+
+起動コマンドに `--mount` をつけ、VM に明示的にマウントして起動する。
+
+```sh
+colima start --cpu 2 --memory 2 --disk 100 -a x86_64 --mount /Users/xxxxx/oracle
+```
+
+`-v`（ボリューム）オプションを使いデータを永続化
+
+```sh
+docker run --name 21.3.0-xe \
+--memory=2048M \
+-p 1521:1521/tcp -p 5500:5500/tcp \
+-e ORACLE_PWD=Password \
+-e INIT_SGA_SIZE=1028M \
+-e INIT_PGA_SIZE=500MB \
+-e ORACLE_CHARACTERSET=AL32UTF8 \
+-v /Users/xxxxx/oracle/21.3.0-ex:/opt/oracle/aradata container-registry.oracle.com/database/express:21.3.0-xe
+```
+
+## `colima` 停止
+
+```sh
+colima stop
 ```

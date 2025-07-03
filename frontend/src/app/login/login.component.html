@@ -22,5 +22,8 @@
       />
     </div>
     <button (click)="signIn()" class="btn btn-primary">ログイン</button>
+    <div *ngIf="errorMessage" style="color: red; margin-top: 1em">
+      {{ errorMessage }}
+    </div>
   </div>
 </div>

@@ -22,6 +22,15 @@ export class UserService {
     return this.http.get<User[]>(this.apiUrl);
   }
 
+  getUserByUsernameAndPassword(
+    username: string,
+    password: string
+  ): Observable<User> {
+    return this.http.get<User>(
+      `${this.apiUrl}?username=${username}&password=${password}`
+    );
+  }
+
   addUser(todo: User): Observable<User> {
     return this.http.post<User>(this.apiUrl, todo);
   }

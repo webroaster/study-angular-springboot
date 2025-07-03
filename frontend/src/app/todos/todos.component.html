@@ -1,6 +1,11 @@
 <div class="container">
   <h1>Todo List</h1>
 
+  <!-- ユーザー管理画面へのリンクボタン -->
+  <div style="text-align: right; margin-bottom: 1rem">
+    <button routerLink="/users">ユーザー管理へ</button>
+  </div>
+
   <!-- Add Todo Form -->
   <div>
     <input
@@ -28,7 +33,7 @@
       <button (click)="deleteTodo(todo.id)">Delete</button>
     </li>
   </ul>
-  <p *ngIf="todos.length === 0">No todos yet. Add one!</p>
+  <p *ngIf="todos.length === 0">Todoがありません。</p>
 
   <hr />
 

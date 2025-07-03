@@ -1,0 +1,69 @@
+<div class="container">
+  <h1>ユーザー管理</h1>
+
+  <!-- 新規ユーザー登録フォーム -->
+  <div class="user-form">
+    <input
+      [(ngModel)]="newUsername"
+      placeholder="ユーザー名"
+      class="userInput"
+    />
+    <input
+      [(ngModel)]="newDisplayName"
+      placeholder="表示名"
+      class="userInput"
+    />
+    <input
+      [(ngModel)]="newPassword"
+      placeholder="パスワード"
+      type="password"
+      class="userInput"
+    />
+    <input [(ngModel)]="newStatus" placeholder="ステータス" class="userInput" />
+    <button (click)="addUser()">新規登録</button>
+  </div>
+
+  <hr />
+
+  <!-- ユーザー一覧 -->
+  <ul *ngIf="users.length > 0">
+    <li *ngFor="let user of users">
+      <span
+        >{{ user.username }}（{{ user.displayName }}）[{{ user.status }}]</span
+      >
+      <button (click)="editUser(user)">編集</button>
+      <button (click)="deleteUser(user.id)">削除</button>
+    </li>
+  </ul>
+  <p *ngIf="users.length === 0">ユーザーがいません。</p>
+
+  <hr />
+
+  <!-- 編集フォーム -->
+  <div *ngIf="editingUser">
+    <h2>ユーザー編集</h2>
+    <input
+      [(ngModel)]="editingUser.username"
+      placeholder="ユーザー名"
+      class="userInput"
+    />
+    <input
+      [(ngModel)]="editingUser.displayName"
+      placeholder="表示名"
+      class="userInput"
+    />
+    <input
+      [(ngModel)]="editingUser.password"
+      placeholder="パスワード"
+      type="password"
+      class="userInput"
+    />
+    <input
+      [(ngModel)]="editingUser.status"
+      placeholder="ステータス"
+      class="userInput"
+    />
+    <button (click)="updateUser()">保存</button>
+    <button (click)="editingUser = null">キャンセル</button>
+  </div>
+</div>

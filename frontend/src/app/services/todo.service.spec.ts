@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TodoService, Todo } from './todo.service';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
+import { TodoService, Todo } from './services/todo.service';
 
 describe('TodoService', () => {
   let service: TodoService;
@@ -9,7 +12,7 @@ describe('TodoService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [TodoService]
+      providers: [TodoService],
     });
     service = TestBed.inject(TodoService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -26,10 +29,10 @@ describe('TodoService', () => {
   it('should retrieve todos from the API via GET', () => {
     const mockTodos: Todo[] = [
       { id: 1, title: 'Test Todo 1', dueDate: '2025-07-01', completed: false },
-      { id: 2, title: 'Test Todo 2', dueDate: '2025-07-02', completed: true }
+      { id: 2, title: 'Test Todo 2', dueDate: '2025-07-02', completed: true },
     ];
 
-    service.getTodos().subscribe(todos => {
+    service.getTodos().subscribe((todos) => {
       expect(todos.length).toBe(2);
       expect(todos).toEqual(mockTodos);
     });
@@ -40,10 +43,14 @@ describe('TodoService', () => {
   });
 
   it('should add a todo via POST', () => {
-    const newTodo: Todo = { title: 'New Todo', dueDate: '2025-07-03', completed: false };
+    const newTodo: Todo = {
+      title: 'New Todo',
+      dueDate: '2025-07-03',
+      completed: false,
+    };
     const savedTodo: Todo = { ...newTodo, id: 3 };
 
-    service.addTodo(newTodo).subscribe(todo => {
+    service.addTodo(newTodo).subscribe((todo) => {
       expect(todo).toEqual(savedTodo);
     });
 
@@ -54,9 +61,14 @@ describe('TodoService', () => {
   });
 
   it('should update a todo via PUT', () => {
-    const updatedTodo: Todo = { id: 1, title: 'Updated Todo', dueDate: '2025-07-04', completed: true };
+    const updatedTodo: Todo = {
+      id: 1,
+      title: 'Updated Todo',
+      dueDate: '2025-07-04',
+      completed: true,
+    };
 
-    service.updateTodo(updatedTodo).subscribe(todo => {
+    service.updateTodo(updatedTodo).subscribe((todo) => {
       expect(todo).toEqual(updatedTodo);
     });
 

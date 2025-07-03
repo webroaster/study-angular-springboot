@@ -1,0 +1,68 @@
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.todoInput {
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+button {
+  margin-left: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.completed {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+.due-date {
+  margin-left: 1rem;
+  color: #888;
+  font-size: 0.95em;
+}
+
+hr {
+  margin: 1.5rem 0;
+  border: none;
+  border-top: 1px solid #eee;
+}

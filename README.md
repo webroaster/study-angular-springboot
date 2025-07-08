@@ -30,6 +30,7 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 - [SpringBoot: mvnw の役割](./documents/springboot/mvnw.md)
 - [SpringBoot: デプロイ周り](./documents/springboot/deploy.md)
 - [SpringBoot: 階層型アーキテクチャ](./documents/springboot/layerd.md)
+- [SpringBoot: テスト](./documents/springboot/test.md)
 
 ## インストール
 

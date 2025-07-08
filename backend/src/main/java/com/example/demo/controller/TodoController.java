@@ -1,6 +1,7 @@
-package com.example.demo;
+package com.example.demo.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.demo.service.TodoService;
+import com.example.demo.Todo;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,45 +12,44 @@ import java.util.Optional;
 @RequestMapping("/api/todos")
 public class TodoController {
 
-    @Autowired
-    private TodoMapper todoMapper; // TodoRepository(JPA) から TodoMapper(MyBatis) に変更
+    private final TodoService todoService;
 
-    // すべてのTODOを取得するGET API
-    @GetMapping
-    public List<Todo> getAllTodos() {
-        return this.todoMapper.findAll();
+    public TodoController(TodoService todoService) {
+        this.todoService = todoService;
     }
 
-    // 新しいTODOを作成するPOST API
+    @GetMapping
+    public List<Todo> getAllTodos() {
+        return todoService.findAll();
+    }
+
     @PostMapping
     public ResponseEntity<Todo> createTodo(@RequestBody Todo todo) {
         if (todo.getTitle() == null || todo.getTitle().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        todoMapper.save(todo);
-        return ResponseEntity.ok(todo);
+        Todo savedTodo = todoService.save(todo);
+        return ResponseEntity.ok(savedTodo);
     }
 
-    // 指定されたIDのTODOを更新するPUT API
     @PutMapping("/{id}")
     public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @RequestBody Todo todo) {
-        Optional<Todo> optionalTodo = todoMapper.findById(id);
+        Optional<Todo> optionalTodo = todoService.findById(id);
         if (optionalTodo.isPresent()) {
             Todo existingTodo = optionalTodo.get();
             existingTodo.setTitle(todo.getTitle());
             existingTodo.setDueDate(todo.getDueDate());
             existingTodo.setCompleted(todo.isCompleted());
-            todoMapper.update(existingTodo);
-            return ResponseEntity.ok(existingTodo);
+            Todo updatedTodo = todoService.update(existingTodo);
+            return ResponseEntity.ok(updatedTodo);
         } else {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // 指定されたIDのTODOを削除するDELETE API
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTodo(@PathVariable Long id) {
-        todoMapper.deleteById(id);
+        todoService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

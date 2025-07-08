@@ -1,4 +1,6 @@
-package com.example.demo;
+package com.example.demo.mapper;
+
+import com.example.demo.User;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,9 +16,6 @@ public interface UserMapper {
   @Select("SELECT id, username, display_name, \"password\", \"status\" FROM users WHERE id = #{id}")
   Optional<User> findById(Long id);
 
-  @Select("SELECT id, username, display_name, \"password\", \"status\" FROM users WHERE username = #{username} AND \"password\" = #{password}")
-  Optional<User> findByUsernameAndPassword(String username, String password);
-
   @Insert("INSERT INTO users (username, display_name, \"password\", \"status\") VALUES (#{username}, #{displayName}, #{password}, #{status})")
   @Options(useGeneratedKeys = true, keyProperty = "id")
   void save(User user);
@@ -28,4 +27,7 @@ public interface UserMapper {
   void deleteById(Long id);
 
   boolean existsById(Long id);
+
+  @Select("SELECT id, username, display_name, \"password\", \"status\" FROM users WHERE username = #{username} AND \"password\" = #{password}")
+  Optional<User> findByUsernameAndPassword(String username, String password);
 }

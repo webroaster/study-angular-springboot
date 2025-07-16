@@ -34,6 +34,10 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 - [SpringBoot: MyBatis Generator](./documents/springboot/mybatis-generator.md)
 - [SpringBoot: opendata-generator](./documents/springboot/opendata-generator.md)
 
+### Oracle
+
+- [Oracle database イメージの作成](./documents/oracle/local.md)
+
 ## インストール
 
 ```sh

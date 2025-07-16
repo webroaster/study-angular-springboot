@@ -1,5 +1,62 @@
 # Oracle ローカル起動
 
+## 導入手順
+
+### Oracle イメージをビルド
+
+公式リポジトリをクローンする
+
+```sh
+git clone https://github.com/oracle/docker-images.git
+```
+
+Docker イメージ作成シェルのあるディレクトリに移動
+
+```sh
+cd docker-images/OracleDatabase/SingleInstance/dockerfiles/
+```
+
+バージョン指定してイメージをビルド
+
+```sh
+./buildContainerImage.sh -v 23.6.0 -f -i
+```
+
+このままローカルにビルドしたイメージを使用可能。
+
+また、イメージを任意のコンテナリポジトリにプッシュしてそこからプルして使用することも可能。
+
+### イメージを GitHub コンテナリポジトリにプッシュ
+
+Docker CLI で GHCR にログイン（あらかじめ Github の PAT を作成しておく）
+
+```sh
+echo YOUR_PAT | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+```
+
+イメージのタグ付け
+
+```sh
+docker tag oracle/database:23.6.0-free ghcr.io/YOUR_GITHUB_USERNAME_OR_ORG/YOUR_REPOSITORY_NAME/oracle/database:23.6.0-free
+```
+
+GHCR にプッシュ
+
+```sh
+docker push ghcr.io/YOUR_GITHUB_USERNAME_OR_ORG/YOUR_REPOSITORY_NAME/oracle/database:23.6.0-free
+```
+
+docker-compose.yaml にプッシュしたリモートリポジトリから起動するように定義
+
+```yaml
+...
+  db:
+    image: ghcr.io/YOUR_GITHUB_USERNAME_OR_ORG/YOUR_REPOSITORY_NAME/oracle/database:23.6.0-free
+    ...
+```
+
+## 以下はローカル起動に失敗したもので記録として残す
+
 当方 M1Mac のため、Docker Desktop と併用して Colima という仮想マシンを立てて、その中で Oracle を動かす構成で開発をする。
 
 [参考サイト: M1,M2(ARM) MacBook に Colima で Oracle Database を手間なくインストールする](https://qiita.com/waicode/items/d67782c33b7d40052245)

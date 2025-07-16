@@ -31,6 +31,8 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 - [SpringBoot: デプロイ周り](./documents/springboot/deploy.md)
 - [SpringBoot: 階層型アーキテクチャ](./documents/springboot/layerd.md)
 - [SpringBoot: テスト](./documents/springboot/test.md)
+- [SpringBoot: MyBatis Generator](./documents/springboot/mybatis-generator.md)
+- [SpringBoot: opendata-generator](./documents/springboot/openapi-generator.md)
 
 ## インストール
 

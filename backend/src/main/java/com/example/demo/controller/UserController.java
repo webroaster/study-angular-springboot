@@ -1,17 +1,19 @@
 package com.example.demo.controller;
 
+import com.example.demo.api.UsersApi;
+import com.example.demo.dto.UserRequest;
+import com.example.demo.dto.UserResponse;
+import com.example.demo.entity.User;
 import com.example.demo.service.UserService;
-import com.example.demo.User;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/users")
-public class UserController {
+public class UserController implements UsersApi {
 
   private final UserService userService;
 
@@ -19,52 +21,64 @@ public class UserController {
     this.userService = userService;
   }
 
-  @GetMapping
-  public List<User> getAllUsers() {
-    return userService.findAll();
+  @Override
+  public ResponseEntity<UserResponse> createUser(UserRequest userRequest) {
+    if (userRequest.getUsername() == null || userRequest.getUsername().isEmpty()) {
+      return ResponseEntity.badRequest().build();
+    }
+    User user = convertToEntity(userRequest);
+    User savedUser = userService.save(user);
+    return ResponseEntity.ok(convertToResponse(savedUser));
   }
 
-  @GetMapping(params = {"username", "password"})
-  public ResponseEntity<User> getUserByUsernameAndPassword(
-      @RequestParam("username") String username,
-      @RequestParam("password") String password) {
+  @Override
+  public ResponseEntity<Void> deleteUser(Long id) {
+    userService.deleteById(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  @Override
+  public ResponseEntity<UserResponse> getUserByUsernameAndPassword(String username, String password) {
     Optional<User> user = userService.findByUsernameAndPassword(username, password);
     if (user.isPresent()) {
-      return ResponseEntity.ok(user.get());
+      return ResponseEntity.ok(convertToResponse(user.get()));
     } else {
       return ResponseEntity.notFound().build();
     }
   }
 
-
-  @PostMapping
-  public ResponseEntity<User> createUser(@RequestBody User user) {
-    if (user.getUsername() == null || user.getUsername().isEmpty()) {
-      return ResponseEntity.badRequest().build();
-    }
-    User savedUser = userService.save(user);
-    return ResponseEntity.ok(savedUser);
-  }
-
-  @PutMapping("/{id}")
-  public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+  @Override
+  public ResponseEntity<UserResponse> updateUser(Long id, UserRequest userRequest) {
     Optional<User> optionalUser = userService.findById(id);
     if (optionalUser.isPresent()) {
       User existingUser = optionalUser.get();
-      existingUser.setUsername(user.getUsername());
-      existingUser.setDisplayName(user.getDisplayName());
-      existingUser.setPassword(user.getPassword());
-      existingUser.setStatus(user.getStatus());
+      existingUser.setUsername(userRequest.getUsername());
+      existingUser.setDisplayName(userRequest.getDisplayName());
+      existingUser.setPassword(userRequest.getPassword());
+      existingUser.setStatus(userRequest.getStatus());
       User updatedUser = userService.update(existingUser);
-      return ResponseEntity.ok(updatedUser);
+      return ResponseEntity.ok(convertToResponse(updatedUser));
     } else {
       return ResponseEntity.notFound().build();
     }
   }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-    userService.deleteById(id);
-    return ResponseEntity.noContent().build();
+  private User convertToEntity(UserRequest userRequest) {
+    User user = new User();
+    user.setUsername(userRequest.getUsername());
+    user.setDisplayName(userRequest.getDisplayName());
+    user.setPassword(userRequest.getPassword());
+    user.setStatus(userRequest.getStatus());
+    return user;
+  }
+
+  private UserResponse convertToResponse(User user) {
+    UserResponse userResponse = new UserResponse();
+    userResponse.setId(user.getId());
+    userResponse.setUsername(user.getUsername());
+    userResponse.setDisplayName(user.getDisplayName());
+    userResponse.setPassword(user.getPassword());
+    userResponse.setStatus(user.getStatus());
+    return userResponse;
   }
 }

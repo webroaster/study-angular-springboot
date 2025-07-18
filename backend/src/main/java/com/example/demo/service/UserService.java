@@ -1,13 +1,13 @@
 package com.example.demo.service;
 
 import com.example.demo.mapper.UserMapper;
-import com.example.demo.User;
+import com.example.demo.entity.User;
+import com.example.demo.entity.UserExample;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
@@ -19,31 +19,36 @@ public class UserService {
   }
 
   public List<User> findAll() {
-    return userMapper.findAll();
+    return userMapper.selectByExample(null);
   }
 
-  public Optional<User> findById(Long id) {
-    return userMapper.findById(id);
+  public Optional<User> findById(Integer id) {
+    return Optional.ofNullable(userMapper.selectByPrimaryKey(id));
   }
 
   @Transactional
   public User save(User user) {
-    userMapper.save(user);
+    userMapper.insert(user);
     return user;
   }
 
   @Transactional
   public User update(User user) {
-    userMapper.update(user);
+    userMapper.updateByPrimaryKey(user);
     return user;
   }
 
   @Transactional
-  public void deleteById(Long id) {
-    userMapper.deleteById(id);
+  public void deleteById(Integer id) {
+    userMapper.deleteByPrimaryKey(id);
   }
 
   public Optional<User> findByUsernameAndPassword(String username, String password) {
-    return userMapper.findByUsernameAndPassword(username, password);
+    UserExample example = new UserExample();
+    example.createCriteria()
+        .andUsernameEqualTo(username)
+        .andPasswordEqualTo(password);
+    List<User> users = userMapper.selectByExample(example);
+    return users.stream().findFirst();
   }
 }

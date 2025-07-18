@@ -46,5 +46,6 @@
     "*.md": "markdown"
   },
   "markdown.preview.breaks": true,
-  "markdown.preview.wordWrap": "on"
+  "markdown.preview.wordWrap": "on",
+  "java.configuration.updateBuildConfiguration": "interactive"
 }

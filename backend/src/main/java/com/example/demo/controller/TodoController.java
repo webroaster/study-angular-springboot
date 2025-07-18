@@ -1,16 +1,20 @@
+
 package com.example.demo.controller;
 
+import com.example.demo.api.TodosApi;
+import com.example.demo.dto.TodoRequest;
+import com.example.demo.dto.TodoResponse;
+import com.example.demo.entity.Todo;
 import com.example.demo.service.TodoService;
-import com.example.demo.Todo;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/todos")
-public class TodoController {
+public class TodoController implements TodosApi {
 
     private final TodoService todoService;
 
@@ -18,38 +22,59 @@ public class TodoController {
         this.todoService = todoService;
     }
 
-    @GetMapping
-    public List<Todo> getAllTodos() {
-        return todoService.findAll();
+    @Override
+    public ResponseEntity<List<TodoResponse>> getAllTodos() {
+        List<TodoResponse> todoResponses = todoService.findAll().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(todoResponses);
     }
 
-    @PostMapping
-    public ResponseEntity<Todo> createTodo(@RequestBody Todo todo) {
-        if (todo.getTitle() == null || todo.getTitle().isEmpty()) {
+    @Override
+    public ResponseEntity<TodoResponse> createTodo(TodoRequest todoRequest) {
+        if (todoRequest.getTitle() == null || todoRequest.getTitle().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
+        Todo todo = convertToEntity(todoRequest);
         Todo savedTodo = todoService.save(todo);
-        return ResponseEntity.ok(savedTodo);
+        return ResponseEntity.ok(convertToResponse(savedTodo));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Todo> updateTodo(@PathVariable Long id, @RequestBody Todo todo) {
+    @Override
+    public ResponseEntity<TodoResponse> updateTodo(Long id, TodoRequest todoRequest) {
         Optional<Todo> optionalTodo = todoService.findById(id);
         if (optionalTodo.isPresent()) {
             Todo existingTodo = optionalTodo.get();
-            existingTodo.setTitle(todo.getTitle());
-            existingTodo.setDueDate(todo.getDueDate());
-            existingTodo.setCompleted(todo.isCompleted());
+            existingTodo.setTitle(todoRequest.getTitle());
+            existingTodo.setDueDate(todoRequest.getDueDate());
+            existingTodo.setCompleted(todoRequest.getCompleted());
             Todo updatedTodo = todoService.update(existingTodo);
-            return ResponseEntity.ok(updatedTodo);
+            return ResponseEntity.ok(convertToResponse(updatedTodo));
         } else {
             return ResponseEntity.notFound().build();
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTodo(@PathVariable Long id) {
+    @Override
+    public ResponseEntity<Void> deleteTodo(Long id) {
         todoService.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Todo convertToEntity(TodoRequest todoRequest) {
+        Todo todo = new Todo();
+        todo.setTitle(todoRequest.getTitle());
+        todo.setDueDate(todoRequest.getDueDate());
+        todo.setCompleted(todoRequest.getCompleted());
+        return todo;
+    }
+
+    private TodoResponse convertToResponse(Todo todo) {
+        TodoResponse todoResponse = new TodoResponse();
+        todoResponse.setId(todo.getId());
+        todoResponse.setTitle(todo.getTitle());
+        todoResponse.setDueDate(todo.getDueDate());
+        todoResponse.setCompleted(todo.getCompleted());
+        return todoResponse;
     }
 }

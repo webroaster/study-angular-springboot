@@ -10,6 +10,10 @@
                         password="password">
         </jdbcConnection>
 
+        <javaTypeResolver>
+            <property name="useJSR310Types" value="true"/>
+        </javaTypeResolver>
+
         <javaModelGenerator targetPackage="com.example.demo.entity" targetProject="src/main/java">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
@@ -23,11 +27,13 @@
 
         <table tableName="USERS" domainObjectName="User">
             <generatedKey column="ID" sqlStatement="select PRODUCTS_SEQ.nextval from dual" identity="true" />
-            <columnOverride column="ID" jdbcType="NUMERIC" javaType="java.lang.Integer" />
+            <columnOverride column="ID" jdbcType="NUMERIC" javaType="java.lang.Long" />
         </table>
         <table tableName="TODOS" domainObjectName="Todo">
             <generatedKey column="ID" sqlStatement="select PRODUCTS_SEQ.nextval from dual" identity="true" />
-            <columnOverride column="ID" jdbcType="NUMERIC" javaType="java.lang.Integer" />
+            <columnOverride column="ID" jdbcType="NUMERIC" javaType="java.lang.Long" />
+            <columnOverride column="DUE_DATE" javaType="java.time.LocalDate" />
+            <columnOverride column="COMPLETED" javaType="java.lang.Boolean" typeHandler="com.example.demo.typehandler.BooleanNumberTypeHandler" />
         </table>
     </context>
 </generatorConfiguration>

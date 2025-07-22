@@ -4,10 +4,14 @@ import com.example.demo.mapper.TodoMapper;
 import com.example.demo.dto.TodoRequest;
 import com.example.demo.dto.TodoResponse;
 import com.example.demo.entity.Todo;
+import com.example.demo.exception.InternalServerErrorException;
+import com.example.demo.exception.ResourceNotFoundException;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TodoService {
@@ -18,11 +22,14 @@ public class TodoService {
     this.todoMapper = todoMapper;
   }
 
-  public List<Todo> findAll() {
-    return todoMapper.selectByExample(null);
+  public List<TodoResponse> findAll() {
+    List<Todo> todos = todoMapper.selectByExample(null);
+    return todos.stream()
+      .map(this::toResponse)
+      .collect(Collectors.toList());
   }
 
-  public Optional<Todo> findById(Integer id) {
+  public Optional<Todo> findById(Long id) {
     return Optional.ofNullable(todoMapper.selectByPrimaryKey(id));
   }
 
@@ -31,10 +38,35 @@ public class TodoService {
       throw new IllegalArgumentException("Todo request must not be null");
     }
 
-    Todo todo = toEntity
+    Todo todo = toEntity(todoRequest);
+    todoMapper.insertSelective(todo);
+    return toResponse(todo);
   }
 
-  public void deleteById(Integer id) {
+  public TodoResponse updateTodo(Long id, TodoRequest todoRequest) {
+    if (todoRequest == null) {
+      throw new IllegalArgumentException("Todo request must not be null");
+    }
+
+    Todo existingTodo;
+
+    try {
+      existingTodo = todoMapper.selectByPrimaryKey(id);
+    } catch (Exception e) {
+      throw new InternalServerErrorException("Failed to update todo with id" + id + " due to an internal error.", e);
+    }
+
+    if (existingTodo == null) {
+      throw new ResourceNotFoundException("Todo with id" + id + " not found");
+    }
+
+    Todo todoToUpdate = toEntity(todoRequest);
+    todoToUpdate.setId(id);
+    todoMapper.updateByPrimaryKey(todoToUpdate);
+    return toResponse(todoMapper.selectByPrimaryKey(id));
+  }
+
+  public void deleteById(Long id) {
     todoMapper.deleteByPrimaryKey(id);
   }
 

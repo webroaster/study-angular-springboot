@@ -22,7 +22,7 @@ public class UserService {
     return userMapper.selectByExample(null);
   }
 
-  public Optional<User> findById(Integer id) {
+  public Optional<User> findById(Long id) {
     return Optional.ofNullable(userMapper.selectByPrimaryKey(id));
   }
 
@@ -39,7 +39,7 @@ public class UserService {
   }
 
   @Transactional
-  public void deleteById(Integer id) {
+  public void deleteById(Long id) {
     userMapper.deleteByPrimaryKey(id);
   }
 

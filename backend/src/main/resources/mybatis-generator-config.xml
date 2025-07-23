@@ -26,11 +26,11 @@
         </javaClientGenerator>
 
         <table tableName="USERS" domainObjectName="User">
-            <generatedKey column="ID" sqlStatement="select PRODUCTS_SEQ.nextval from dual" identity="true" />
+            <generatedKey column="ID" sqlStatement="select USERS_SEQ.nextval from dual" identity="true" />
             <columnOverride column="ID" jdbcType="NUMERIC" javaType="java.lang.Long" />
         </table>
         <table tableName="TODOS" domainObjectName="Todo">
-            <generatedKey column="ID" sqlStatement="select PRODUCTS_SEQ.nextval from dual" identity="true" />
+            <generatedKey column="ID" sqlStatement="select TODOS_SEQ.nextval from dual" identity="true" />
             <columnOverride column="ID" jdbcType="NUMERIC" javaType="java.lang.Long" />
             <columnOverride column="DUE_DATE" javaType="java.time.LocalDate" />
             <columnOverride column="COMPLETED" javaType="java.lang.Boolean" typeHandler="com.example.demo.typehandler.BooleanNumberTypeHandler" />

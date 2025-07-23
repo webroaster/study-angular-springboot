@@ -79,6 +79,93 @@
 
 これで、これまで OpenAPI Generator で生成していた model パッケージのクラスを DTO として、今回 MyBatis Generator で生成した entity パッケージの Product.java を DB の Entity として明確に分離できるようになりました。
 
+## 設定ファイルのタグとその役割
+
+### `<generatorConfiguration>`
+
+- MyBatis Generator の設定ファイルのルート要素
+- タグの中に、コード生成に関する全ての設定を記述する
+
+### `<context>`
+
+- コード生成の単一のコンテキスト（設定セット）を定義
+- 複数の `<context>` を定義することで、異なるデータベースや異なる生成設定を持つことができる
+- **属性**
+  - `id` : このコンテキストの一位な識別子
+  - `targetRuntime` : 生成されるコードが対象とする MyBatis のらんタイム環境を指定する。通常は `MyBatis3` を指定する
+- データベース接続情報、生成されるファイルの出力先、Java 型のマッピングルール、対象テーブルなどをこの中に定義する
+
+### `<jdbcConnection>`
+
+- コード生成の対象となるデータベースへの接続情報を定義する
+- **属性**
+  - `driverClass` : 使用する JDBC ドライバーのクラス名
+  - `connectionURL` : データベースへの接続 URL
+  - `userId` : データベース接続ユーザー名
+  - `password`: データベース接続パスワード
+- データベースの種類（Oracle, MySQL, PostgreSQL など）に応じたドライバー、URL、認証情報を設定する
+
+### `<javaTypeResolver>`
+
+- データベースの JDBC 型を、どの Java 型にマッピングするかを定義する
+- `<property name="useJSR310Types" value="true"/>`
+  - Java 8 の日付・時刻 API（java.time パッケージ、JSR310）を使用指定、データベースの日付・時刻型をマッピングするかどうかを設定する
+  - true にすると `java.util.Date` の代わりに `java.time.LocalDate` や `java.time.LocalDateTime` などが使用される
+
+### `<javaModelGenerator>`
+
+- データベースのテーブルに対応する Java のモデル（エンティティ）クラスを生成するための設定
+- **属性**
+  - `targetPackage` : 生成されるモデルクラスの Java パッケージ名
+  - `targetProject` : 生成されるモデルクラスの出力先プロジェクトディレクトリ
+- `<property name="enableSubPackages" value="true"/>`
+  - テーブル名に基づいてサブパッケージを作成するかどうか
+- `<property name="trimStrings" value="true"/>`
+  - データベースから取得した文字列の末尾をトリムするかどうか
+
+### `<sqlMapGenerator>`
+
+- MyBatis の SQL マッピング XML ファイルを生成するための設定
+- **属性**
+  - `targetPackage`: 生成される SQL マッピング XML ファイルの出力先ディレクトリ
+  - `targetProject`: 生成される SQL マッピング XML ファイルの出力先プロジェクト
+- `<property name="enableSubPackages" value="true"/>`
+  - テーブル名に基づいてサブディレクトリを作成するかどうか
+
+### `<javaClientGenerator>`
+
+- MyBatis の Mapper インターフェース（DAO インターフェース）を生成するための設定
+- **属性**
+  - `type`: 生成するクライアントのタイプ。`XMLMAPPER` は XML ファイルと連携するインターフェースを生成する
+  - `targetPackage`, `targetProject`: 出力先
+- `<property name="enableSubPackages" value="true"/>`
+  - テーブル名に基づいてサブディレクトリを作成するかどうか
+
+### `<table>`
+
+- コード生成の対象となる個々のデータベーステーブルを定義
+- **属性**
+  - `tableName` : データベース上のテーブル名
+  - `domainObjectName` : テーブルに対応して生成される Java モデルクラスのクラス名
+- `<generatedKey>`
+  - 主キーがデータベースによって自動生成される場合（シーケンスやオートインクリメント）の設定
+  - `column`
+    - 主キーのカラム名
+  - `sqlStatement`
+    - 主キーの値を生成するための SQL ステートメント（Oracle の `select USERS_SEQ.nextval from dual` のようなシーケンス取得文）
+  - `identity`
+    - 主キーがデータベースによって自動生成される場合に `true` に設定する
+- `<columnOverride>`
+  - 特定のカラムに対して、デフォルトの型マッピングやプロパティを上書きする際に使用する
+  - `column`
+    - 上書きするから無名
+  - `jdbcType`
+    - そのカラムの JDBC 型
+  - `javaType`
+    - そのカラムにマッピングする Java 型
+  - `typeHandler`
+    - そのカラムの型変換にカスタムの TypeHandler を使用する場合に、そのクラス名を指定
+
 ## 自動生成ファイルの目的
 
 これらのファイルは、アプリケーションの関心事を分離する「レイヤードアーキテクチャ」の考え方に基づいています。具体的には、データ構造（Entity）、データベース操作の定義（Mapper インターフェース）、SQL の実装（XML マッパー）を明確に分離することで、コードの保守性や可読性を高めることを目的としています。

@@ -56,7 +56,7 @@ Docker コンテナが実行されたら、以下のサービスにアクセス�
 ### DB 接続（Docker コンテナ）
 
 ```bash
-docker exec -it demo_db bash -c "export NLS_LANG=JAPANESE_JAPAN.AL32UTF8; sqlplus appuser/password@//localhost:1521/FREEPDB1"
+docker exec -it demo_db_source bash -c "export NLS_LANG=JAPANESE_JAPAN.AL32UTF8; sqlplus appuser/password@//localhost:1521/FREEPDB1"
 
 SQL> SELECT table_name FROM user_tables;
 

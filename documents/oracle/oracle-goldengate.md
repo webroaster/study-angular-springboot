@@ -399,3 +399,31 @@ OGG のパラメータファイルを変更して設定を適用する流れは�
 3. (新規プロセスの場合のみ) `ADD EXTRACT` や `ADD REPLICAT` でプロセスグループを追加
 4. `START <プロセス名>` でプロセスを起動
 5. `INFO ALL` や `STATS` コマンド、レポートファイル (`dirrpt` ディレクトリ内) で動作を確認する。
+
+## 作業メモ
+
+### 1. OGG イメージ作成
+
+公式リポジトリをクローン: [Oracle GoldenGate/23](https://github.com/oracle/docker-images/blob/main/OracleGoldenGate/23/README.md)
+
+GoldenGate の無料ダウンロード（zip）: https://www.oracle.com/jp/integration/goldengate/free/download/
+
+Oracle Linux をダウンロードした。
+
+クローンしたリポジトリの `OracleGoldenGate/23` ディレクトリにダウンロードした zip ファイルを移動
+
+ビルドコマンド実行
+
+```sh
+docker build --platform linux/amd64 --tag=oracle/goldengate:23.4 \
+--build-arg BASE_IMAGE="oracle/database:23.6.0-free" \
+--build-arg INSTALLER=ogg_23c_Linux_x64_Oracle_services_free_shiphome.zip .
+```
+
+インストール後イメージ確認
+
+```sh
+❯ docker images
+REPOSITORY                                         TAG           IMAGE ID       CREATED          SIZE
+oracle/goldengate                                  23.4          564effc777a2   11 minutes ago   3.46GB
+```

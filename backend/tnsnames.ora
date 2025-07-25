@@ -1,0 +1,17 @@
+SOURCE_DB =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = db-source)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = FREEPDB1)
+    )
+  )
+
+TARGET_DB =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = db-target)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = FREEPDB1)
+    )
+  )

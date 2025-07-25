@@ -1,13 +1,25 @@
 version: '3.8'
 
 services:
-  db:
+  db-source:
     image: oracle/database:23.6.0-free
-    container_name: demo_db
+    container_name: demo_db_source
     ports:
       - 1521:1521
     volumes:
-      - db-store:/opt/oracle/oradata
+      - db-source-store:/opt/oracle/oradata
+      - ./src/main/resources/schemas/setup:/opt/oracle/scripts/setup
+      - ./listener.ora:/opt/oracle/product/23ai/dbhomeFree/network/admin/listener.ora
+    environment:
+      - ORACLE_PWD=password
+
+  db-target:
+    image: oracle/database:23.6.0-free
+    container_name: demo_db_target
+    ports:
+      - 1522:1521
+    volumes:
+      - db-target-store:/opt/oracle/oradata
       - ./src/main/resources/schemas/setup:/opt/oracle/scripts/setup
     environment:
       - ORACLE_PWD=password
@@ -20,7 +32,28 @@ services:
     ports:
       - '8080:8080'
     depends_on:
-      - db
+      - db-source
+
+  ogg:
+    image: oracle/goldengate:23.4
+    container_name: demo_ogg
+    depends_on:
+      - db-source
+      - db-target
+    volumes:
+      - ./tnsnames.ora:/u01/ogg/lib/instantclient/network/admin/tnsnames.ora
+      # - ./ogg_config_data:/u02/Deployment
+      # - ./ogg_setup.sh:/u01/ogg/scripts/setup/ogg_setup.sh
+    environment:
+      # - TNS_ADMIN=/u01/ogg/lib/instantclient
+      - OGG_ADMIN=oggadmin
+      - OGG_ADMIN_PWD=P@ssw0rd1
+      # - ORACLE_HOME=/u01/ogg
+      # - ORACLE_SID=FREEPDB1
+    ports:
+      - '9011:9011'
+      - '80:80'
 
 volumes:
-  db-store:
+  db-source-store:
+  db-target-store:

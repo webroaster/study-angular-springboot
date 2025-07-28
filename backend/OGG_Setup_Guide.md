@@ -331,21 +331,20 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     OGG (http://localhost:9011 Local as ogg_src@FREE) 3> edit params IEXT
     ```
 
-    エディタでロード対象のテーブルと**証跡ファイル**を指定します。
+    エディタでロード対象のテーブルを指定します。**証跡ファイル名はここでは指定しません。**
 
     ```
     extract IEXT
     useridalias ogg_src
-    exttrail ./dirdat/i1
     table appuser.todos;
     ```
 
 2.  **初期ロード用 Replicat (IREP) を作成:**
-    初期ロード用の証跡ファイルをターゲット DB に適用する Replicat です。
+    初期ロード用の証跡ファイル (`./dirdat/i1`) をターゲット DB に適用する Replicat です。
     ```
     OGG (http://localhost:9011 Local as ogg_src@FREE) 4> dblogin useridalias ogg_tgt
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 5> add replicat IREP, exttrail ./dirdat/i1, checkpointtable c##ggadmin.checkpoint
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 6> edit params IREP
+    OGG (http://localhost:9011 Local as ogg_src@FREE) 5> add replicat IREP, exttrail ./dirdat/i1, checkpointtable c##ggadmin.checkpoint
+    OGG (http://localhost:9011 Local as ogg_src@FREE) 6> edit params IREP
     ```
     エディタでマッピングを設定します。
     ```
@@ -359,17 +358,17 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
 以下の順序で各プロセスを起動することが重要です。
 
 1.  **変更キャプチャを開始:**
-    まず、継続的な変更を捉える `EXT1` を起動します。これにより、初期ロード中に発生した変更も漏らさずキャプチャできます。
+    まず、継続的な変更を捉える `EXT1` を起動します。
 
     ```
     OGG (http://localhost:9011 Local as ogg_tgt@FREE) 7> start extract EXT1
     ```
 
 2.  **初期ロードを実行:**
-    `IEXT` (抽出) と `IREP` (適用) を順に実行します。これらはタスクが完了すると自動で停止します。
+    `start extract` コマンドの `output` オプションで証跡ファイルを指定して `IEXT` を起動します。
 
     ```
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 8> start extract IEXT
+    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 8> start extract IEXT, output ./dirdat/i1
     -- info extract IEXT で進捗を確認。STATUSがSTOPPED (At EOF) になれば完了。
 
     OGG (http://localhost:9011 Local as ogg_tgt@FREE) 9> start replicat IREP

@@ -1,6 +1,6 @@
-# Oracle GoldenGate (OGG) Docker 環境セットアップとデータ同期ガイド
+# Oracle GoldenGate (OGG) Docker 環境セットアップとデータ同期ガイド (最終版)
 
-このドキュメントでは、`docker-compose` を使用して Oracle GoldenGate のレプリケーション環境を構築し、アプリケーションスキーマ (`appuser`) のデータを同期するための手順を解説します。
+このドキュメントでは、`docker-compose` を使用して Oracle GoldenGate のレプリケーション環境を構築し、アプリケーションスキーマ (`appuser`) のデータを、**初期ロード**と**継続的な同期**の両方を含めてセットアップする手順を解説します。
 
 ## 1. 環境セットアップ
 
@@ -194,25 +194,20 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     /u01/ogg/bin/adminclient
     ```
 
-2.  **OGG 管理サービスに接続:**
-
-    ```
-    OGG (not connected) 1> connect http://localhost:9011 as oggadmin password P@ssw0rd1
-    ```
+2.  **OGG 管理サービスに接続し、資格情報を設定:**
 
     - `oggadmin` は `docker-compose.yaml` で設定した OGG 管理ユーザーです。
 
-    **資格証明ストアの設定**: GoldenGate がデータベースに接続するためのユーザー名とパスワードを安全に保存します。
-
     ```
-    OGG (http://localhost:9011 Local) 2> alter credentialstore add user c##ggadmin@SOURCE_DB password password alias ogg_src
-    OGG (http://localhost:9011 Local) 3> alter credentialstore add user c##ggadmin@TARGET_DB password password alias ogg_tgt
+    connect http://localhost:9011 as oggadmin password P@ssw0rd1
+    alter credentialstore add user c##ggadmin@SOURCE_DB password password alias ogg_src
+    alter credentialstore add user c##ggadmin@TARGET_DB password password alias ogg_tgt
     ```
 
     - `c##ggadmin`: データベースに作成した GoldenGate 用ユーザー。
-    - `SOURCE_DB` / `TARGET_DB`: `tnsnames.ora` で定義した接続識別子。
+    - `SOURCE_DB / TARGET_DB`: `tnsnames.ora` で定義した接続識別子。
     - `password`: `c##ggadmin` ユーザーのパスワード。
-    - `ogg_src` / `ogg_tgt`: 資格証明ストア内で使用するエイリアス名。
+    - `ogg_src / ogg_tgt`: 資格証明ストア内で使用するエイリアス名。
 
     確認コマンド
 
@@ -228,34 +223,29 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     Userid: c##ggadmin@TARGET_DB
     ```
 
-3.  **データベースログインの確認:**
-    設定した資格情報でデータベースに接続できるか確認します。
+3.  **継続的な変更同期用のプロセス (EXT1, REP1) を作成:**
+
+    **データベースログイン**
 
     ```
-    OGG (http://localhost:9011 Local) 4> dblogin useridalias ogg_src
+    dblogin useridalias ogg_src
     ```
 
-    - `Successfully logged into database.` と表示されれば成功です。
-
-4.  **スキーマレベルのトランザクションデータ有効化:**
-    GoldenGate が特定のスキーマの変更をキャプチャできるように、データベースの補助ログを有効にします。
+    **スキーマの補助ログを有効化**
 
     ```
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 5> add schematrandata appuser
+    add schematrandata appuser
     ```
 
-    - `appuser`: 変更をキャプチャする対象のスキーマ名。
-
-5.  **変更同期用 Extract (EXT1) の作成:**
-    ソース DB の**継続的な変更**を抽出するプロセスです。
+    **継続的な変更をキャプチャする Extract(EXT1) を作成**
 
     ```
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 6> add extract EXT1, integrated tranlog, begin now
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 7> add exttrail ./dirdat/e1, extract EXT1
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 8> edit params EXT1
+    add extract EXT1, integrated tranlog, begin now
+    add exttrail ./dirdat/e1, extract EXT1
+    edit params EXT1
     ```
 
-    エディタで以下の内容を記述し、`appuser` スキーマのみを対象にします。
+    エディタで以下の内容を記述
 
     ```
     extract EXT1
@@ -270,28 +260,37 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     - `exttrail ./dirdat/e1`: 抽出した変更を書き出す証跡ファイルの名前とパス
     - `table appuser.*;`: `appuser` スキーマ内全てのテーブルの変更をキャプチャ対象とする
 
-6.  **Extract (EXT1) のデータベース登録:**
+    **Extract を DB に登録**
 
     ```
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 9> register extract EXT1 database
+    register extract EXT1 database
     ```
 
     - `EXT1`: 登録する Extract プロセスの名前
     - `DATABASE`: データベースに登録することを指定します
 
-7.  **変更同期用 Replicat (REP1) の作成:**
-    ターゲット DB に**継続的な変更**を適用するプロセスです。
+    **ターゲット DB に接続**
 
     ```
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 10> dblogin useridalias ogg_tgt
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 11> add checkpointtable c##ggadmin.checkpoint
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 12> add replicat REP1, exttrail ./dirdat/e1, checkpointtable c##ggadmin.checkpoint
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 13> edit params REP1
+    dblogin useridalias ogg_tgt
     ```
 
-    - `dblogin useridalias ogg_tgt`: ターゲット DB に接続を切り替えます
-    - `add checkpointtable c##ggadmin.checkpoint`: Replicat の処理状況を記録するチェックポイントテーブルを作成します
-    - `edit params REP1` 実行後、エディタが開くので以下の内容を記述して保存・終了します
+    **チェックポイントテーブルを作成**
+
+    ```
+    add checkpointtable c##ggadmin.checkpoint
+    ```
+
+    **継続的な変更を適用する Replicat (REP1) を作成**
+
+    ```
+    add replicat REP1, exttrail ./dirdat/e1, checkpointtable c##ggadmin.checkpoint
+    edit params REP1
+    ```
+
+    - `add checkpointtable c##ggadmin.checkpoint`: `Replicat` の処理状況を記録するチェックポイントテーブルを作成します
+
+    エディタで以下の内容を記述
 
     ```
     replicat REP1
@@ -303,57 +302,52 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     - `exttrail ./dirdat/e1`: 読み込む証跡ファイルの名前
     - `map appuser.*, target appuser.*;`: ソースの `appuser` スキーマの全てのテーブルを、ターゲットの `appuser` スキーマの同名テーブルにマッピングします
 
-## 3. データ同期の仕組み
-
-- **Extract (抽出プロセス)**: ソースデータベースのトランザクションログ（REDO ログ）を読み取り、設定されたルールに基づいて変更データ（DML/DDL）を抽出します。抽出されたデータは「証跡ファイル (Trail File)」に書き込まれます。
-- **証跡ファイル (Trail File)**: Extract プロセスによって生成される、変更データが格納された中間ファイルです。このファイルは、Extract と Replicat の間でデータを転送するための主要なメカニズムです。
-- **Replicat (適用プロセス)**: 証跡ファイルを読み取り、抽出された変更データをターゲットデータベースに適用します。これにより、ソースとターゲットのデータが同期されます。
-- **チェックポイントテーブル**: Replicat プロセスがどこまでデータを適用したかを記録するために使用されます。これにより、Replicat が停止しても、再開時に中断した時点から処理を継続できます。
-
-## 4. 初期ロードと継続的なデータ同期の実行
+## 3. 初期ロードとデータ同期の実行
 
 `appuser` スキーマのように、**既にデータが存在するテーブル**を初めて同期する場合、「初期ロード」が必要です。ここでは GoldenGate の機能を使ってオンラインで初期ロードを実行します。
 
-### 4.1. 前提
+### 3.1. 前提
 
-- ソース DB の `appuser` スキーマには `todos` テーブルとデータが存在する。
-- ターゲット DB の `appuser` スキーマは空（テーブルもデータもない状態）。
-- セクション 2 で作成した `EXT1` と `REP1` は `STOPPED` 状態であること。
+- ソース DB の `appuser.todos` テーブルにデータが存在する。
+- ターゲット DB の `appuser.todos` テーブルは存在しないか、空である。
+- 上記で作成した `EXT1` と `REP1` は `STOPPED` 状態であること。
 
-### 4.2. 初期ロード用プロセスの作成 (`adminclient`内)
+### 3.2. 初期ロード用「タスク」の作成 (`adminclient`内)
 
-1.  **初期ロード用 Extract (IEXT) を作成:**
-    テーブルから直接データを読み込むための特別な Extract です。
+1.  **初期ロード用 Extract タスク (IEXT) を作成:**
 
     ```
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 1> dblogin useridalias ogg_src
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 2> add extract IEXT, sourceistable
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 3> edit params IEXT
+    dblogin useridalias ogg_src
+    add extract IEXT, sourceistable
+    edit params IEXT
     ```
 
-    エディタでロード対象のテーブルを指定します。**証跡ファイル名はここでは指定しません。**
+    エディタで以下の内容を記述します。`RMTTASK` で対になる Replicat タスクを指定するのが最重要ポイントです。
 
     ```
     extract IEXT
     useridalias ogg_src
+    RMTTASK replicat, group IREP
     table appuser.todos;
     ```
 
-2.  **初期ロード用 Replicat (IREP) を作成:**
-    初期ロード用の証跡ファイル (`./dirdat/i1`) をターゲット DB に適用する Replicat です。
+    - `RMTTASK`: `IREP` という名前の Replicat タスクと連携させる
+
+2.  **初期ロード用 Replicat タスク (IREP) を作成:**
+    `specialrun` オプションを付けて、`IEXT` から起動される特別な Replicat として作成します。
     ```
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 4> dblogin useridalias ogg_tgt
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 5> add replicat IREP, exttrail ./dirdat/i1, checkpointtable c##ggadmin.checkpoint
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 6> edit params IREP
+    dblogin useridalias ogg_tgt
+    add replicat IREP, specialrun, checkpointtable c##ggadmin.checkpoint
+    edit params IREP
     ```
-    エディタでマッピングを設定します。
+    エディタでマッピングルールを記述します。
     ```
     replicat IREP
     useridalias ogg_tgt
     map appuser.todos, target appuser.todos;
     ```
 
-### 4.3. 実行フロー
+### 3.3. 実行フロー
 
 以下の順序で各プロセスを起動することが重要です。
 
@@ -361,28 +355,26 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     まず、継続的な変更を捉える `EXT1` を起動します。
 
     ```
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 7> start extract EXT1
+    start extract EXT1
     ```
 
-2.  **初期ロードを実行:**
-    `start extract` コマンドの `output` オプションで証跡ファイルを指定して `IEXT` を起動します。
+2.  **初期ロードタスクを実行:**
+    `IEXT` を起動します。これにより、対になっている `IREP` が自動的に起動され、ロードが完了すると両方のタスクが自動で停止します。
 
     ```
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 8> start extract IEXT, trail ./dirdat/i1
-    -- info extract IEXT で進捗を確認。STATUSがSTOPPED (At EOF) になれば完了。
-
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 9> start replicat IREP
-    -- info replicat IREP で進捗を確認。STATUSがSTOPPED (At EOF) になれば完了。
+    start extract IEXT
     ```
+
+    `info all` を実行し、`IEXT` と `IREP` が `STOPPED` になるのを待ちます。
 
 3.  **変更の適用を開始:**
     初期ロードが完了したら、`EXT1` が溜めていた変更を適用するために `REP1` を起動します。
     ```
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 10> start replicat REP1
+    start replicat REP1
     ```
     `info all` を実行し、`EXT1` と `REP1` が `RUNNING` 状態になっていれば、セットアップは完了です。
 
-### 4.4. データ同期の確認
+### 3.4. データ同期の確認
 
 1.  **ターゲット DB で初期データを確認:**
     `docker exec -it demo_db_target bash` でコンテナに入り、`sqlplus appuser/password@FREEPDB1` で接続して確認します。
@@ -420,3 +412,10 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     ```sql
     SELECT * FROM todos WHERE id = 99;
     ```
+
+## データ同期の仕組み
+
+- **Extract (抽出プロセス)**: ソースデータベースのトランザクションログ（REDO ログ）を読み取り、設定されたルールに基づいて変更データ（DML/DDL）を抽出します。抽出されたデータは「証跡ファイル (Trail File)」に書き込まれます。
+- **証跡ファイル (Trail File)**: Extract プロセスによって生成される、変更データが格納された中間ファイルです。このファイルは、Extract と Replicat の間でデータを転送するための主要なメカニズムです。
+- **Replicat (適用プロセス)**: 証跡ファイルを読み取り、抽出された変更データをターゲットデータベースに適用します。これにより、ソースとターゲットのデータが同期されます。
+- **チェックポイントテーブル**: Replicat プロセスがどこまでデータを適用したかを記録するために使用されます。これにより、Replicat が停止しても、再開時に中断した時点から処理を継続できます。

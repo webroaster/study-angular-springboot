@@ -336,7 +336,6 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     ```
     extract IEXT
     useridalias ogg_src
-    exttrail ./dirdat/i1
     table appuser.todos;
     ```
 
@@ -369,7 +368,7 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     `start extract` コマンドの `output` オプションで証跡ファイルを指定して `IEXT` を起動します。
 
     ```
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 8> start extract IEXT, output ./dirdat/i1
+    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 8> start extract IEXT, trail ./dirdat/i1
     -- info extract IEXT で進捗を確認。STATUSがSTOPPED (At EOF) になれば完了。
 
     OGG (http://localhost:9011 Local as ogg_tgt@FREE) 9> start replicat IREP

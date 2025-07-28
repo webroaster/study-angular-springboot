@@ -214,6 +214,20 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     - `password`: `c##ggadmin` ユーザーのパスワード。
     - `ogg_src` / `ogg_tgt`: 資格証明ストア内で使用するエイリアス名。
 
+    確認コマンド
+
+    ```
+    INFO CREDENTIALSTORE
+
+    Default domain: OracleGoldenGate
+
+    Alias: ogg_src
+    Userid: c##ggadmin@SOURCE_DB
+
+    Alias: ogg_tgt
+    Userid: c##ggadmin@TARGET_DB
+    ```
+
 3.  **データベースログインの確認:**
     設定した資格情報でデータベースに接続できるか確認します。
 
@@ -314,11 +328,10 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     ```
     OGG (http://localhost:9011 Local as ogg_tgt@FREE) 1> dblogin useridalias ogg_src
     OGG (http://localhost:9011 Local as ogg_src@FREE) 2> add extract IEXT, sourceistable
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 3> add exttrail ./dirdat/i1, extract IEXT
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 4> edit params IEXT
+    OGG (http://localhost:9011 Local as ogg_src@FREE) 3> edit params IEXT
     ```
 
-    エディタでロード対象のテーブルを指定します。
+    エディタでロード対象のテーブルと**証跡ファイル**を指定します。
 
     ```
     extract IEXT
@@ -330,9 +343,9 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
 2.  **初期ロード用 Replicat (IREP) を作成:**
     初期ロード用の証跡ファイルをターゲット DB に適用する Replicat です。
     ```
-    OGG (http://localhost:9011 Local as ogg_src@FREE) 5> dblogin useridalias ogg_tgt
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 6> add replicat IREP, exttrail ./dirdat/i1, checkpointtable c##ggadmin.checkpoint
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 7> edit params IREP
+    OGG (http://localhost:9011 Local as ogg_src@FREE) 4> dblogin useridalias ogg_tgt
+    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 5> add replicat IREP, exttrail ./dirdat/i1, checkpointtable c##ggadmin.checkpoint
+    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 6> edit params IREP
     ```
     エディタでマッピングを設定します。
     ```
@@ -349,24 +362,24 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     まず、継続的な変更を捉える `EXT1` を起動します。これにより、初期ロード中に発生した変更も漏らさずキャプチャできます。
 
     ```
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 8> start extract EXT1
+    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 7> start extract EXT1
     ```
 
 2.  **初期ロードを実行:**
     `IEXT` (抽出) と `IREP` (適用) を順に実行します。これらはタスクが完了すると自動で停止します。
 
     ```
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 9> start extract IEXT
+    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 8> start extract IEXT
     -- info extract IEXT で進捗を確認。STATUSがSTOPPED (At EOF) になれば完了。
 
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 10> start replicat IREP
+    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 9> start replicat IREP
     -- info replicat IREP で進捗を確認。STATUSがSTOPPED (At EOF) になれば完了。
     ```
 
 3.  **変更の適用を開始:**
     初期ロードが完了したら、`EXT1` が溜めていた変更を適用するために `REP1` を起動します。
     ```
-    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 11> start replicat REP1
+    OGG (http://localhost:9011 Local as ogg_tgt@FREE) 10> start replicat REP1
     ```
     `info all` を実行し、`EXT1` と `REP1` が `RUNNING` 状態になっていれば、セットアップは完了です。
 
@@ -394,7 +407,7 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
 
     ```sql
     -- sqlplus appuser/password@FREEPDB1
-    INSERT INTO todos (id, title, completed, "user_id") VALUES (99, '初期ロード確認', 0, 1);
+    INSERT INTO todos (id, title, completed) VALUES (99, 'init load test', 1);
     COMMIT;
     ```
 

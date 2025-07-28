@@ -336,6 +336,7 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     ```
     extract IEXT
     useridalias ogg_src
+    exttrail ./dirdat/i1
     table appuser.todos;
     ```
 

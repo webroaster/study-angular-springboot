@@ -1,4 +1,4 @@
-# Oracle GoldenGate (OGG) Docker 環境セットアップとデータ同期ガイド (最終版)
+# Oracle GoldenGate (OGG) Docker 環境セットアップとデータ同期ガイド
 
 このドキュメントでは、`docker-compose` を使用して Oracle GoldenGate のレプリケーション環境を構築し、アプリケーションスキーマ (`appuser`) のデータを、**初期ロード**と**継続的な同期**の両方を含めてセットアップする手順を解説します。
 
@@ -302,120 +302,42 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     - `exttrail ./dirdat/e1`: 読み込む証跡ファイルの名前
     - `map appuser.*, target appuser.*;`: ソースの `appuser` スキーマの全てのテーブルを、ターゲットの `appuser` スキーマの同名テーブルにマッピングします
 
-## 3. 初期ロードとデータ同期の実行
+## 3. データ同期の実行と確認
 
-`appuser` スキーマのように、**既にデータが存在するテーブル**を初めて同期する場合、「初期ロード」が必要です。ここでは GoldenGate の機能を使ってオンラインで初期ロードを実行します。
-
-### 3.1. 前提
-
-- ソース DB の `appuser.todos` テーブルにデータが存在する。
-- ターゲット DB の `appuser.todos` テーブルは存在しないか、空である。
-- 上記で作成した `EXT1` と `REP1` は `STOPPED` 状態であること。
-
-### 3.2. 初期ロード用「タスク」の作成 (`adminclient`内)
-
-1.  **初期ロード用 Extract タスク (IEXT) を作成:**
-
-    ```
-    dblogin useridalias ogg_src
-    add extract IEXT, sourceistable
-    edit params IEXT
-    ```
-
-    エディタで以下の内容を記述します。`RMTTASK` で対になる Replicat タスクを指定するのが最重要ポイントです。
-
-    ```
-    extract IEXT
-    useridalias ogg_src
-    RMTTASK replicat, group IREP
-    table appuser.todos;
-    ```
-
-    - `RMTTASK`: `IREP` という名前の Replicat タスクと連携させる
-
-2.  **初期ロード用 Replicat タスク (IREP) を作成:**
-    `specialrun` オプションを付けて、`IEXT` から起動される特別な Replicat として作成します。
-    ```
-    dblogin useridalias ogg_tgt
-    add replicat IREP, specialrun, checkpointtable c##ggadmin.checkpoint
-    edit params IREP
-    ```
-    エディタでマッピングルールを記述します。
-    ```
-    replicat IREP
-    useridalias ogg_tgt
-    map appuser.todos, target appuser.todos;
-    ```
-
-### 3.3. 実行フロー
-
-以下の順序で各プロセスを起動することが重要です。
-
-1.  **変更キャプチャを開始:**
-    まず、継続的な変更を捉える `EXT1` を起動します。
+1.  **同期プロセスを開始:**
+    作成した Extract と Replicat を起動します。
 
     ```
     start extract EXT1
-    ```
-
-2.  **初期ロードタスクを実行:**
-    `IEXT` を起動します。これにより、対になっている `IREP` が自動的に起動され、ロードが完了すると両方のタスクが自動で停止します。
-
-    ```
-    start extract IEXT
-    ```
-
-    `info all` を実行し、`IEXT` と `IREP` が `STOPPED` になるのを待ちます。
-
-3.  **変更の適用を開始:**
-    初期ロードが完了したら、`EXT1` が溜めていた変更を適用するために `REP1` を起動します。
-    ```
     start replicat REP1
     ```
-    `info all` を実行し、`EXT1` と `REP1` が `RUNNING` 状態になっていれば、セットアップは完了です。
 
-### 3.4. データ同期の確認
+2.  **プロセスの状態を確認:**
+    `info all` コマンドで、`EXT1` と `REP1` の `Status` が `RUNNING` になっていることを確認します。
 
-1.  **ターゲット DB で初期データを確認:**
-    `docker exec -it demo_db_target bash` でコンテナに入り、`sqlplus appuser/password@FREEPDB1` で接続して確認します。
-
-    ```bash
-    docker exec -it demo_db_source bash
-    sqlplus appuser/password@FREEPDB1
+    ```
+    info all
     ```
 
-    ```sql
-    SELECT COUNT(*) FROM todos;
-    ```
+3.  **データ同期をテスト:**
+    ソース DB にデータを挿入し、ターゲット DB に反映されるかを確認します。
 
-2.  **継続的な同期を確認:**
-    `docker exec -it demo_db_source bash` でソース DB に接続し、データを一件追加します。
+    - **ソース DB に接続してデータを挿入:**
 
-    ```bash
-    docker exec -it demo_db_source bash
-    sqlplus appuser/password@FREEPDB1
-    ```
+      ```bash
+      docker exec -it demo_db_source bash
+      sqlplus appuser/password@FREEPDB1
+      -- SQLプロンプトで以下を実行
+      INSERT INTO todos (id, title, completed) VALUES (99, 'init load test', 1);
+      COMMIT;
+      EXIT;
+      ```
 
-    ```sql
-    -- sqlplus appuser/password@FREEPDB1
-    INSERT INTO todos (id, title, completed) VALUES (99, 'init load test', 1);
-    COMMIT;
-    ```
-
-    その後、再度ターゲット DB で `SELECT * FROM todos WHERE id = 99;` を実行し、新しいデータが同期されていることを確認します。
-
-    ```bash
-    docker exec -it demo_db_target bash
-    sqlplus appuser/password@FREEPDB1
-    ```
-
-    ```sql
-    SELECT * FROM todos WHERE id = 99;
-    ```
-
-## データ同期の仕組み
-
-- **Extract (抽出プロセス)**: ソースデータベースのトランザクションログ（REDO ログ）を読み取り、設定されたルールに基づいて変更データ（DML/DDL）を抽出します。抽出されたデータは「証跡ファイル (Trail File)」に書き込まれます。
-- **証跡ファイル (Trail File)**: Extract プロセスによって生成される、変更データが格納された中間ファイルです。このファイルは、Extract と Replicat の間でデータを転送するための主要なメカニズムです。
-- **Replicat (適用プロセス)**: 証跡ファイルを読み取り、抽出された変更データをターゲットデータベースに適用します。これにより、ソースとターゲットのデータが同期されます。
-- **チェックポイントテーブル**: Replicat プロセスがどこまでデータを適用したかを記録するために使用されます。これにより、Replicat が停止しても、再開時に中断した時点から処理を継続できます。
+    - **ターゲット DB に接続してデータを確認:**
+      ```bash
+      docker exec -it demo_db_target bash
+      sqlplus appuser/password@FREEPDB1
+      -- SQLプロンプトで以下を実行
+      SELECT * FROM todos WHERE id = 99;
+      ```
+      ソースで挿入したレコードが表示されれば、継続的なデータ同期は正常に動作しています。

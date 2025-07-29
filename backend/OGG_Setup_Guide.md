@@ -234,10 +234,17 @@ TARGET_DB =
 
 既存のデータをソース DB からターゲット DB へ一度だけ転送します。
 
+**注意:** 以下の手順を実行する前に、もし以前の初期ロードプロセスが残っている場合は削除してください。
+
+```
+delete extract EXT_IL
+delete replicat REP_IL
+```
+
 1.  **初期ロード用 Extract (EXT_IL) を作成:**
 
     ```
-    add extract EXT_IL, integrated tranlog, begin now, specialrun
+    add extract EXT_IL, integrated tranlog, begin now
     edit params EXT_IL
     ```
 
@@ -258,7 +265,7 @@ TARGET_DB =
 2.  **初期ロード用 Replicat (REP_IL) を作成:**
 
     ```
-    add replicat REP_IL, specialrun, exttrail ./dirdat/il
+    add replicat REP_IL, specialrun
     edit params REP_IL
     ```
 

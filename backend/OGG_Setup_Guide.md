@@ -250,8 +250,7 @@ dblogin useridalias ogg_src
 1.  **初期ロード用 Extract (EXT_IL) を作成:**
 
     ```
-    add extract EXT_IL, integrated tranlog, begin now
-    add exttrail ./dirdat/il, extract EXT_IL
+    add extract EXT_IL, sourceistable
     edit params EXT_IL
     ```
 
@@ -265,20 +264,18 @@ dblogin useridalias ogg_src
     ```
 
     - `EXT_IL`: 初期ロード用 Extract プロセスの名前
-    - `SPECIALRUN`: 初期ロード専用の Extract であることを示します。Extract がすべてのデータを処理し終えると自動的に停止します。
+    - `SOURCEISTABLE`: ソーステーブルから直接データを抽出することを示します。Extract がすべてのデータを処理し終えると自動的に停止します。
     - `exttrail ./dirdat/il`: 初期ロードで抽出した変更を書き出す証跡ファイルの名前とパス
     - `table appuser.users;`: `appuser.users` テーブルのみを初期ロードの対象とする
+
+    **証跡ファイルを割り当て**
+
+    ```
+    add exttrail ./dirdat/il, extract EXT_IL
+    ```
+
     - `exttrail ./dirdat/il`: 初期ロードで抽出した変更を書き出す証跡ファイルの名前とパス
     - `EXT_IL`: 証跡ファイルを割り当てる Extract プロセスの名前
-
-    **Extract を DB に登録**
-
-    ```
-    register extract EXT_IL database
-    ```
-
-    - `EXT_IL`: 登録する Extract プロセスの名前
-    - `DATABASE`: データベースに登録することを指定します
 
 **データベースログイン (ターゲット DB)**
 

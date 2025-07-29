@@ -105,7 +105,8 @@ TARGET_DB =
 
 - **`01_init_source_db.sql`**: ソースデータベース (`db-source`) 用の初期化スクリプトです。GoldenGate の Extract プロセスが変更をキャプチャするために必要な権限 (`c##oggsrc` ユーザー) と、アプリケーションユーザー (`appuser`) の作成が含まれます。
 - **`01_init_target_db.sql`**: ターゲットデータベース (`db-target`) 用の初期化スクリプトです。GoldenGate の Replicat プロセスが変更を適用するために必要な権限 (`c##oggtgt` ユーザー) と、アプリケーションユーザー (`appuser`) の作成が含まれます。
-- **`02_create_tables.sql`**: `appuser` スキーマに `users` テーブルと `todos` テーブルを作成します。
+- **`02_create_source_tables.sql`**: ソースデータベースの `appuser` スキーマに `users` テーブルを作成します。
+- **`02_create_target_tables.sql`**: ターゲットデータベースの `appuser` スキーマに `users` テーブルと `todos` テーブルを作成します。
 - **`03_init_source_data.sql`**: ソースデータベースの `users` テーブルと `todos` テーブルに初期データを投入します。
 - **`03_init_target_data.sql`**: ターゲットデータベースの `todos` テーブルに初期データを投入します。`users` テーブルのデータは初期ロードで転送されるため、ここでは含めません。
 

@@ -241,6 +241,12 @@ delete extract EXT_IL
 delete replicat REP_IL
 ```
 
+**データベースログイン (ソースDB)**
+
+```
+dblogin useridalias ogg_src
+```
+
 1.  **初期ロード用 Extract (EXT_IL) を作成:**
 
     ```
@@ -273,6 +279,12 @@ delete replicat REP_IL
 
     - `EXT_IL`: 登録する Extract プロセスの名前
     - `DATABASE`: データベースに登録することを指定します
+
+**データベースログイン (ターゲットDB)**
+
+```
+dblogin useridalias ogg_tgt
+```
 
 2.  **初期ロード用 Replicat (REP_IL) を作成:**
 

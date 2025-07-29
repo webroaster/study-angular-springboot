@@ -55,7 +55,7 @@ services:
       # - ORACLE_SID=FREEPDB1
     ports:
       - '9011:9011'
-      - '80:80'
+      - '80:80' # OGG Web UIのポート (今回は使用しない)
 
 volumes:
   db-source-store:

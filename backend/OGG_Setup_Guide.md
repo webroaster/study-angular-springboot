@@ -114,21 +114,17 @@ TARGET_DB =
 
 `docker-compose up -d` でコンテナを起動した後、`adminclient` を使って GoldenGate のプロセスを設定します。
 
-1.  **OGG コンテナに入り、`adminclient` を起動:**
-
-    ```bash
-    docker exec -it demo_ogg bash
-    /u01/ogg/bin/adminclient
-    ```
-
-2.  **OGG 管理サービスに接続し、資格情報を設定:**
+1.  **OGG 管理サービスに接続し、資格情報を設定:**
 
     - `oggadmin` は `docker-compose.yaml` で設定した OGG 管理ユーザーです。
 
-    ```
+    ```bash
+    # adminclientプロンプトで以下を実行
+    docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
     connect http://localhost:9011 as oggadmin password P@ssw0rd1
     alter credentialstore add user c##oggsrc@SOURCE_DB password password alias ogg_src
     alter credentialstore add user c##oggtgt@TARGET_DB password password alias ogg_tgt
+    EOF
     ```
 
     - `c##oggsrc`: ソースデータベースに作成した GoldenGate 用ユーザー。
@@ -139,9 +135,17 @@ TARGET_DB =
 
     確認コマンド
 
-    ```
+    ```bash
+    # adminclientプロンプトで以下を実行
+    docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
+    connect http://localhost:9011 as oggadmin password P@ssw0rd1
     INFO CREDENTIALSTORE
+    EOF
+    ```
 
+    出力例:
+
+    ```
     Default domain: OracleGoldenGate
 
     Alias: ogg_src
@@ -151,74 +155,50 @@ TARGET_DB =
     Userid: c##oggtgt@TARGET_DB
     ```
 
-3.  **継続的な変更同期用のプロセス (EXT1, REP1) を作成:**
-
-    **データベースログイン**
-
-    ```
-    dblogin useridalias ogg_src
-    ```
+2.  **継続的な変更同期用のプロセス (EXT1, REP1) を作成:**
 
     **スキーマの補助ログを有効化**
 
-    ```
+    ```bash
+    # adminclientプロンプトで以下を実行
+    docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
+    connect http://localhost:9011 as oggadmin password P@ssw0rd1
+    dblogin useridalias ogg_src
     add schematrandata appuser
+    EOF
     ```
 
-    **継続的な変更をキャプチャする Extract(EXT1) を作成**
+    **継続的な変更をキャプチャする Extract(EXT1) のパラメータファイルを作成**
 
-    ```
-    add extract EXT1, integrated tranlog, begin now
-    add exttrail ./dirdat/e1, extract EXT1
-    edit params EXT1
+    OGG コンテナ内で以下のコマンドを実行し、`EXT1.prm` ファイルを作成します。
+
+    ```bash
+    docker exec demo_ogg bash -c "echo -e 'extract EXT1\nuseridalias ogg_src\nexttrail /u02/Deployment/var/lib/data/dirdat/e1\ntable appuser.users;' > /u02/Deployment/etc/conf/ogg/EXT1.prm"
     ```
 
-    エディタで以下の内容を記述
+    **`EXT1.prm` の内容:**
 
     ```
     extract EXT1
     useridalias ogg_src
-    exttrail ./dirdat/e1
+    exttrail /u02/Deployment/var/lib/data/dirdat/e1
     table appuser.users;
     ```
 
     - `EXT1`: Extract プロセスの名前
-    - `INTEGRATED TRANLOG`: 統合キャプチャモードでトランザクションログから変更を読み取ります
-    - `BEGIN NOW`: 現在時刻から変更のキャプチャを開始します
+    - `useridalias ogg_src`: ソースデータベースへの接続に使用する資格証明ストアのエイリアス
     - `exttrail ./dirdat/e1`: 抽出した変更を書き出す証跡ファイルの名前とパス
-    - `table appuser.*;`: `appuser` スキーマ内全てのテーブルの変更をキャプチャ対象とする
+    - `table appuser.users;`: `appuser.users` テーブルの変更をキャプチャ対象とする
 
-    **Extract を DB に登録**
+    **継続的な変更を適用する Replicat (REP1) のパラメータファイルを作成**
 
-    ```
-    register extract EXT1 database
-    ```
+    OGG コンテナ内で以下のコマンドを実行し、`REP1.prm` ファイルを作成します。
 
-    - `EXT1`: 登録する Extract プロセスの名前
-    - `DATABASE`: データベースに登録することを指定します
-
-    **ターゲット DB に接続**
-
-    ```
-    dblogin useridalias ogg_tgt
+    ```bash
+    docker exec demo_ogg bash -c "echo -e 'replicat REP1\nuseridalias ogg_tgt\nmap appuser.users, target appuser.users;' > /u02/Deployment/etc/conf/ogg/REP1.prm"
     ```
 
-    **チェックポイントテーブルを作成**
-
-    ```
-    add checkpointtable c##oggtgt.checkpoint
-    ```
-
-    **継続的な変更を適用する Replicat (REP1) を作成**
-
-    ```
-    add replicat REP1, exttrail ./dirdat/e1, checkpointtable c##oggtgt.checkpoint
-    edit params REP1
-    ```
-
-    - `add checkpointtable c##oggtgt.checkpoint`: `Replicat` の処理状況を記録するチェックポイントテーブルを作成します
-
-    エディタで以下の内容を記述
+    **`REP1.prm` の内容:**
 
     ```
     replicat REP1
@@ -227,8 +207,41 @@ TARGET_DB =
     ```
 
     - `REP1`: Replicat プロセスの名前
-    - `exttrail ./dirdat/e1`: 読み込む証跡ファイルの名前
-    - `map appuser.*, target appuser.*;`: ソースの `appuser` スキーマの全てのテーブルを、ターゲットの `appuser` スキーマの同名テーブルにマッピングします
+    - `useridalias ogg_tgt`: ターゲットデータベースへの接続に使用する資格証明ストアのエイリアス
+    - `map appuser.users, target appuser.users;`: ソースの `appuser.users` テーブルを、ターゲットの `appuser.users` テーブルにマッピングする
+
+    **Extract (EXT1) を作成し、DB に登録**
+
+    `adminclient` プロンプトで以下を実行します。
+
+    ```bash
+    docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
+    connect http://localhost:9011 as oggadmin password P@ssw0rd1
+    dblogin useridalias ogg_src
+    add extract EXT1, integrated tranlog, begin now
+    register extract EXT1 database
+    add exttrail /u02/Deployment/var/lib/data/dirdat/e1, extract EXT1
+    EOF
+    ```
+
+    - `EXT1`: 登録する Extract プロセスの名前
+    - `DATABASE`: データベースに登録することを指定します
+    - `add exttrail ...`: 抽出した変更を書き出す証跡ファイルを Extract に割り当てます。
+
+    **チェックポイントテーブルを作成し、Replicat (REP1) を作成**
+
+    `adminclient` プロンプトで以下を実行します。
+
+    ```bash
+    docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
+    connect http://localhost:9011 as oggadmin password P@ssw0rd1
+    dblogin useridalias ogg_tgt
+    add checkpointtable c##oggtgt.checkpoint
+    add replicat REP1, exttrail /u02/Deployment/var/lib/data/dirdat/e1, checkpointtable c##oggtgt.checkpoint
+    EOF
+    ```
+
+    - `add checkpointtable c##oggtgt.checkpoint`: `Replicat` の処理状況を記録するチェックポイントテーブルを作成します
 
 ## 2.1. 初期ロードの実行 (users テーブルのみ)
 
@@ -236,52 +249,50 @@ TARGET_DB =
 
 **注意:** 以下の手順を実行する前に、もし以前の初期ロードプロセスが残っている場合は削除してください。
 
-```
+```bash
+# OGGコンテナに入り、adminclientを起動
+docker exec -it demo_ogg bash
+/u01/ogg/bin/adminclient
+
+# adminclientプロンプトで以下を実行
+connect http://localhost:9011 as oggadmin password P@ssw0rd1
+stop extract EXT_IL
+stop replicat REP_IL
 delete extract EXT_IL
 delete replicat REP_IL
 ```
 
-**データベースログイン (ソース DB)**
+1.  **初期ロード用 Extract (EXT_IL) のパラメータファイルを作成:**
 
-```
-dblogin useridalias ogg_src
-```
+    OGG コンテナ内で以下のコマンドを実行し、`EXT_IL.prm` ファイルを作成します。
 
-1.  **初期ロード用 Extract (EXT_IL) を作成:**
-
-    ```
-    add extract EXT_IL, sourceistable
-    edit params EXT_IL
+    ```bash
+    docker exec demo_ogg bash -c "echo -e 'extract EXT_IL\nuseridalias ogg_src\nexttrail /u02/Deployment/var/lib/data/dirdat/il\ntable appuser.users;' > /u02/Deployment/etc/conf/ogg/EXT_IL.prm"
     ```
 
-    エディタで以下の内容を記述
+    **`EXT_IL.prm` の内容:**
 
     ```
     extract EXT_IL
     useridalias ogg_src
-    exttrail ./dirdat/il
+    exttrail /u02/Deployment/var/lib/data/dirdat/il
     table appuser.users;
     ```
 
-    - `EXT_IL`: 初期ロード用 Extract プロセスの名前
-    - `SOURCEISTABLE`: ソーステーブルから直接データを抽出することを示します。Extract がすべてのデータを処理し終えると自動的に停止します。
-    - `exttrail ./dirdat/il`: 初期ロードで抽出した変更を書き出す証跡ファイルの名前とパス
+    - `EXT_IL`: Extract プロセスの名前
+    - `useridalias ogg_src`: ソースデータベースへの接続に使用する資格証明ストアのエイリアス
+    - `exttrail /u02/Deployment/var/lib/data/dirdat/il`: 抽出した変更を書き出す証跡ファイルの名前とパス
     - `table appuser.users;`: `appuser.users` テーブルのみを初期ロードの対象とする
 
-**データベースログイン (ターゲット DB)**
+2.  **初期ロード用 Replicat (REP_IL) のパラメータファイルを作成:**
 
-```
-dblogin useridalias ogg_tgt
-```
+    OGG コンテナ内で以下のコマンドを実行し、`REP_IL.prm` ファイルを作成します。
 
-2.  **初期ロード用 Replicat (REP_IL) を作成:**
-
-    ```
-    add replicat REP_IL, specialrun, exttrail ./dirdat/il
-    edit params REP_IL
+    ```bash
+    docker exec demo_ogg bash -c "echo -e 'replicat REP_IL\nuseridalias ogg_tgt\nmap appuser.users, target appuser.users;' > /u02/Deployment/etc/conf/ogg/REP_IL.prm"
     ```
 
-    エディタで以下の内容を記述
+    **`REP_IL.prm` の内容:**
 
     ```
     replicat REP_IL
@@ -289,32 +300,56 @@ dblogin useridalias ogg_tgt
     map appuser.users, target appuser.users;
     ```
 
-    - `REP_IL`: 初期ロード用 Replicat プロセスの名前
-    - `SPECIALRUN`: 初期ロード専用の Replicat であることを示します。Replicat がすべてのデータを処理し終えると自動的に停止します。
-    - `exttrail ./dirdat/il`: 読み込む証跡ファイルの名前
-    - `map appuser.users, target appuser.users;`: ソースの `appuser.users` テーブルを、ターゲットの `appuser.users` テーブルにマッピングします
+    - `REP_IL`: Replicat プロセスの名前
+    - `useridalias ogg_tgt`: ターゲットデータベースへの接続に使用する資格証明ストアのエイリアス
+    - `map appuser.users, target appuser.users;`: ソースの `appuser.users` テーブルを、ターゲットの `appuser.users` テーブルにマッピングする
+
+3.  **初期ロード用 Extract (EXT_IL) を作成:**
+
+    `adminclient` プロンプトで以下を実行します。
+
+    ```
+    dblogin useridalias ogg_src
+    add extract EXT_IL, tranlog, begin now
+    register extract EXT_IL database
     ```
 
-    - `REP_IL`: 初期ロード用 Replicat プロセスの名前
-    - `SPECIALRUN`: 初期ロード専用の Replicat であることを示します。Replicat がすべてのデータを処理し終えると自動的に停止します。
-    - `exttrail ./dirdat/il`: 読み込む証跡ファイルの名前
-    - `map appuser.users, target appuser.users;`: ソースの `appuser.users` テーブルを、ターゲットの `appuser.users` テーブルにマッピングします
+    - `EXT_IL`: Extract プロセスの名前
+    - `tranlog`: トランザクションログから変更を読み取ることを示します。
+    - `begin now`: 現在時刻から変更のキャプチャを開始します。
+    - `register extract EXT_IL database`: Extract をデータベースに登録します。
 
-3.  **初期ロードプロセスを開始:**
+4.  **初期ロード用 Replicat (REP_IL) を作成:**
+
+    `adminclient` プロンプトで以下を実行します。
+
+    ```
+    dblogin useridalias ogg_tgt
+    add replicat REP_IL, exttrail /u02/Deployment/var/lib/data/dirdat/il, checkpointtable c##oggtgt.checkpoint
+    ```
+
+    - `REP_IL`: Replicat プロセスの名前
+    - `exttrail /u02/Deployment/var/lib/data/dirdat/il`: 読み込む証跡ファイルの名前とパス
+    - `checkpointtable c##oggtgt.checkpoint`: Replicat の処理状況を記録するチェックポイントテーブルを指定します。
+
+5.  **初期ロードプロセスを開始:**
+
+    `adminclient` プロンプトで以下を実行します。
 
     ```
     start extract EXT_IL
     start replicat REP_IL
     ```
 
-4.  **プロセスの状態を確認:**
-    `info all` コマンドで、`EXT_IL` と `REP_IL` の `Status` が `STOPPED` になっていることを確認します。これは `SPECIALRUN` オプションにより、処理完了後に自動停止するためです。
+6.  **プロセスの状態を確認:**
+
+    `info all` コマンドで、`EXT_IL` と `REP_IL` の `Status` が `STOPPED` になっていることを確認します。これは、処理完了後に自動停止するためです。
 
     ```
     info all
     ```
 
-5.  **ターゲット DB で `users` テーブルのデータを確認:**
+7.  **ターゲット DB で `users` テーブルのデータを確認:**
 
     ```bash
     docker exec -it demo_db_target bash
@@ -323,7 +358,7 @@ dblogin useridalias ogg_tgt
     SELECT * FROM users;
     ```
 
-    ソース DB の `users` テーブルのデータがターゲット DB に転送されていれば、初期ロードは成功です。
+    ソース DB の `users` テーブルのデータがターゲット DB に転送されていれば、初期ロードは成功です.
 
 ## 3. データ同期の実行と確認
 

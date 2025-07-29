@@ -10,7 +10,7 @@ services:
       - db-source-store:/opt/oracle/oradata
       - ./src/main/resources/schemas/setup/01_init_source_db.sql:/opt/oracle/scripts/setup/01_init_source_db.sql
       - ./src/main/resources/schemas/setup/02_create_tables.sql:/opt/oracle/scripts/setup/02_create_tables.sql
-      - ./src/main/resources/schemas/setup/03_init_data.sql:/opt/oracle/scripts/setup/03_init_data.sql
+      - ./src/main/resources/schemas/setup/03_init_source_data.sql:/opt/oracle/scripts/setup/03_init_data.sql
     environment:
       - ORACLE_PWD=password
 
@@ -23,7 +23,7 @@ services:
       - db-target-store:/opt/oracle/oradata
       - ./src/main/resources/schemas/setup/01_init_target_db.sql:/opt/oracle/scripts/setup/01_init_target_db.sql
       - ./src/main/resources/schemas/setup/02_create_tables.sql:/opt/oracle/scripts/setup/02_create_tables.sql
-      - ./src/main/resources/schemas/setup/03_init_data.sql:/opt/oracle/scripts/setup/03_init_data.sql
+      - ./src/main/resources/schemas/setup/03_init_target_data.sql:/opt/oracle/scripts/setup/03_init_data.sql
     environment:
       - ORACLE_PWD=password
 

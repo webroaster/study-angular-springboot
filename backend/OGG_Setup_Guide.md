@@ -99,75 +99,15 @@ TARGET_DB =
 - **`PORT = 1521`**: Oracle データベースのデフォルトリスナーポートです。
 - **`SERVICE_NAME = FREEPDB1`**: Oracle 23c Free Edition のデフォルトのプラガブルデータベース (PDB) 名です。
 
-### 1.3. `01_init_user.sql` の設定
+### 1.3. データベース初期化スクリプトの設定
 
-この SQL スクリプトは、データベースコンテナ起動時に自動的に実行され、GoldenGate がデータベース操作を行うために必要なユーザーと権限を設定します。
+`src/main/resources/schemas/setup/` ディレクトリ内の以下の SQL スクリプトは、データベースコンテナ起動時に自動的に実行され、GoldenGate がデータベース操作を行うために必要なユーザーと権限を設定します。
 
-```sql
--- Oracle 23c GoldenGate用 ユーザーおよびPDBセットアップスクリプト
--- このスクリプトは、CDB$ROOTコンテナにSYSDBAとして接続された状態で実行されます。
-
--- エラーが発生した場合は、ただちにスクリプトを終了します。
-WHENEVER SQLERROR EXIT SQL.SQLCODE
-
--- 1. GoldenGateレプリケーションの有効化 (CDB$ROOTでの実行が必須)
-ALTER SYSTEM SET ENABLE_GOLDENGATE_REPLICATION=TRUE SCOPE=BOTH;
-
--- 2. ARCHIVELOGモードの設定
--- GoldenGateが変更をキャプチャするためには、データベースがARCHIVELOGモードである必要があります。
-SHUTDOWN IMMEDIATE;
-STARTUP MOUNT;
-ALTER DATABASE ARCHIVELOG;
-ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;
-ALTER DATABASE OPEN;
-
--- 3. GoldenGate用の共通ユーザーを作成
--- マルチテナント環境では、ユーザー名の接頭辞として C## が必須です。
-CREATE USER c##ggadmin IDENTIFIED BY password CONTAINER=ALL;
-
--- 4. GoldenGateユーザーに必要な権限を付与
--- データベースが完全にオープンされた状態で、権限を付与します。
-GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE TO c##ggadmin CONTAINER=ALL;
-GRANT CREATE VIEW TO c##ggadmin CONTAINER=ALL;
-GRANT SELECT ANY DICTIONARY TO c##ggadmin CONTAINER=ALL;
-GRANT ALTER SYSTEM TO c##ggadmin CONTAINER=ALL;
-
--- Replicatが別スキーマのテーブルを操作するための強力な権限を付与
-GRANT INSERT ANY TABLE, UPDATE ANY TABLE, DELETE ANY TABLE TO c##ggadmin CONTAINER=ALL;
-
--- Oracle 23c推奨のロールベースの権限を付与
-GRANT OGG_CAPTURE TO c##ggadmin CONTAINER=ALL;
-GRANT OGG_APPLY TO c##ggadmin CONTAINER=ALL;
-
--- GoldenGateが内部的に使用するパッケージへの実行権限
-GRANT EXECUTE ON SYS.DBMS_CAPTURE_ADM TO c##ggadmin CONTAINER=ALL;
-GRANT EXECUTE ON SYS.DBMS_XSTREAM_GG_ADM TO c##ggadmin CONTAINER=ALL;
-
--- 統合Extractに必要なLogminerへのアクセス権限
-GRANT SELECT ON V_$DATABASE TO c##ggadmin CONTAINER=ALL;
-GRANT SELECT ON V_$ARCHIVED_LOG TO c##ggadmin CONTAINER=ALL;
-GRANT SELECT ON V_$LOGMNR_CONTENTS TO c##ggadmin CONTAINER=ALL;
-GRANT EXECUTE ON DBMS_LOGMNR TO c##ggadmin CONTAINER=ALL;
-GRANT EXECUTE ON DBMS_LOGMNR_D TO c##ggadmin CONTAINER=ALL;
-
-
--- =================================================================
--- PDB (プラガブル・データベース) の設定
--- =================================================================
-
--- 5. セッションをプラガブル・データベース(FREEPDB1)に切り替え
-ALTER SESSION SET CONTAINER = FREEPDB1;
-
--- 6. アプリケーション用のローカル・ユーザー 'appuser' をPDB内に作成
-CREATE USER appuser IDENTIFIED BY password;
-
--- 7. アプリケーション・ユーザーに権限を付与
-GRANT CONNECT, RESOURCE TO appuser;
-ALTER USER appuser DEFAULT TABLESPACE USERS;
-ALTER USER appuser QUOTA UNLIMITED ON USERS;
-
-COMMIT;
-```
+- **`01_init_source_db.sql`**: ソースデータベース (`db-source`) 用の初期化スクリプトです。GoldenGate の Extract プロセスが変更をキャプチャするために必要な権限 (`c##oggsrc` ユーザー) と、アプリケーションユーザー (`appuser`) の作成が含まれます。
+- **`01_init_target_db.sql`**: ターゲットデータベース (`db-target`) 用の初期化スクリプトです。GoldenGate の Replicat プロセスが変更を適用するために必要な権限 (`c##oggtgt` ユーザー) と、アプリケーションユーザー (`appuser`) の作成が含まれます。
+- **`02_create_tables.sql`**: `appuser` スキーマに `users` テーブルと `todos` テーブルを作成します。
+- **`03_init_source_data.sql`**: ソースデータベースの `users` テーブルと `todos` テーブルに初期データを投入します。
+- **`03_init_target_data.sql`**: ターゲットデータベースの `todos` テーブルに初期データを投入します。`users` テーブルのデータは初期ロードで転送されるため、ここでは含めません。
 
 ## 2. GoldenGate 初期設定 (コンテナ起動後)
 
@@ -190,7 +130,8 @@ COMMIT;
     alter credentialstore add user c##oggtgt@TARGET_DB password password alias ogg_tgt
     ```
 
-    - `c##oggsrc`: データベースに作成した GoldenGate 用ユーザー。
+    - `c##oggsrc`: ソースデータベースに作成した GoldenGate 用ユーザー。
+    - `c##oggtgt`: ターゲットデータベースに作成した GoldenGate 用ユーザー。
     - `SOURCE_DB / TARGET_DB`: `tnsnames.ora` で定義した接続識別子。
     - `password`: `c##ggadmin` ユーザーのパスワード。
     - `ogg_src / ogg_tgt`: 資格証明ストア内で使用するエイリアス名。
@@ -237,7 +178,7 @@ COMMIT;
     extract EXT1
     useridalias ogg_src
     exttrail ./dirdat/e1
-    table appuser.*;
+    table appuser.users;
     ```
 
     - `EXT1`: Extract プロセスの名前
@@ -281,12 +222,82 @@ COMMIT;
     ```
     replicat REP1
     useridalias ogg_tgt
-    map appuser.*, target appuser.*;
+    map appuser.users, target appuser.users;
     ```
 
     - `REP1`: Replicat プロセスの名前
     - `exttrail ./dirdat/e1`: 読み込む証跡ファイルの名前
     - `map appuser.*, target appuser.*;`: ソースの `appuser` スキーマの全てのテーブルを、ターゲットの `appuser` スキーマの同名テーブルにマッピングします
+
+## 2.1. 初期ロードの実行 (users テーブルのみ)
+
+既存のデータをソース DB からターゲット DB へ一度だけ転送します。
+
+1.  **初期ロード用 Extract (EXT_IL) を作成:**
+
+    ```
+    add extract EXT_IL, integrated tranlog, begin now, specialrun
+    edit params EXT_IL
+    ```
+
+    エディタで以下の内容を記述
+
+    ```
+    extract EXT_IL
+    useridalias ogg_src
+    exttrail ./dirdat/il
+    table appuser.users;
+    ```
+
+    - `EXT_IL`: 初期ロード用 Extract プロセスの名前
+    - `SPECIALRUN`: 初期ロード専用の Extract であることを示します。Extract がすべてのデータを処理し終えると自動的に停止します。
+    - `exttrail ./dirdat/il`: 初期ロードで抽出した変更を書き出す証跡ファイルの名前とパス
+    - `table appuser.users;`: `appuser.users` テーブルのみを初期ロードの対象とする
+
+2.  **初期ロード用 Replicat (REP_IL) を作成:**
+
+    ```
+    add replicat REP_IL, specialrun, exttrail ./dirdat/il
+    edit params REP_IL
+    ```
+
+    エディタで以下の内容を記述
+
+    ```
+    replicat REP_IL
+    useridalias ogg_tgt
+    map appuser.users, target appuser.users;
+    ```
+
+    - `REP_IL`: 初期ロード用 Replicat プロセスの名前
+    - `SPECIALRUN`: 初期ロード専用の Replicat であることを示します。Replicat がすべてのデータを処理し終えると自動的に停止します。
+    - `exttrail ./dirdat/il`: 読み込む証跡ファイルの名前
+    - `map appuser.users, target appuser.users;`: ソースの `appuser.users` テーブルを、ターゲットの `appuser.users` テーブルにマッピングします
+
+3.  **初期ロードプロセスを開始:**
+
+    ```
+    start extract EXT_IL
+    start replicat REP_IL
+    ```
+
+4.  **プロセスの状態を確認:**
+    `info all` コマンドで、`EXT_IL` と `REP_IL` の `Status` が `STOPPED` になっていることを確認します。これは `SPECIALRUN` オプションにより、処理完了後に自動停止するためです。
+
+    ```
+    info all
+    ```
+
+5.  **ターゲット DB で `users` テーブルのデータを確認:**
+
+    ```bash
+    docker exec -it demo_db_target bash
+    sqlplus appuser/password@FREEPDB1
+    -- SQLプロンプトで以下を実行
+    SELECT * FROM users;
+    ```
+
+    ソース DB の `users` テーブルのデータがターゲット DB に転送されていれば、初期ロードは成功です。
 
 ## 3. データ同期の実行と確認
 

@@ -119,7 +119,6 @@ TARGET_DB =
     - `oggadmin` は `docker-compose.yaml` で設定した OGG 管理ユーザーです。
 
     ```bash
-    # adminclientプロンプトで以下を実行
     docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
     connect http://localhost:9011 as oggadmin password P@ssw0rd1
     alter credentialstore add user c##oggsrc@SOURCE_DB password password alias ogg_src
@@ -136,7 +135,6 @@ TARGET_DB =
     確認コマンド
 
     ```bash
-    # adminclientプロンプトで以下を実行
     docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
     connect http://localhost:9011 as oggadmin password P@ssw0rd1
     INFO CREDENTIALSTORE
@@ -160,7 +158,6 @@ TARGET_DB =
     **スキーマの補助ログを有効化**
 
     ```bash
-    # adminclientプロンプトで以下を実行
     docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
     connect http://localhost:9011 as oggadmin password P@ssw0rd1
     dblogin useridalias ogg_src

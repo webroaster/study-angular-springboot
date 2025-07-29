@@ -270,7 +270,7 @@ COMMIT;
     **継続的な変更を適用する Replicat (REP1) を作成**
 
     ```
-    add replicat REP1, exttrail ./dirdat/e1, checkpointtable c##ggadmin.checkpoint
+    add replicat REP1, exttrail ./dirdat/e1, checkpointtable c##oggtgt.checkpoint
     edit params REP1
     ```
 

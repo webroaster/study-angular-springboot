@@ -259,7 +259,7 @@ dblogin useridalias ogg_src
     ```
     extract EXT_IL
     useridalias ogg_src
-    OUTFILE ./dirdat/il
+    exttrail ./dirdat/il
     table appuser.users;
     ```
 
@@ -277,7 +277,7 @@ dblogin useridalias ogg_tgt
 2.  **初期ロード用 Replicat (REP_IL) を作成:**
 
     ```
-    add replicat REP_IL, specialrun
+    add replicat REP_IL, specialrun, exttrail ./dirdat/il
     edit params REP_IL
     ```
 
@@ -287,7 +287,12 @@ dblogin useridalias ogg_tgt
     replicat REP_IL
     useridalias ogg_tgt
     map appuser.users, target appuser.users;
-    FILE ./dirdat/il
+    ```
+
+    - `REP_IL`: 初期ロード用 Replicat プロセスの名前
+    - `SPECIALRUN`: 初期ロード専用の Replicat であることを示します。Replicat がすべてのデータを処理し終えると自動的に停止します。
+    - `exttrail ./dirdat/il`: 読み込む証跡ファイルの名前
+    - `map appuser.users, target appuser.users;`: ソースの `appuser.users` テーブルを、ターゲットの `appuser.users` テーブルにマッピングします
     ```
 
     - `REP_IL`: 初期ロード用 Replicat プロセスの名前

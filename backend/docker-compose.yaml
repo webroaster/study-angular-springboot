@@ -8,8 +8,9 @@ services:
       - 1521:1521
     volumes:
       - db-source-store:/opt/oracle/oradata
-      - ./src/main/resources/schemas/setup:/opt/oracle/scripts/setup
-      - ./listener.ora:/opt/oracle/product/23ai/dbhomeFree/network/admin/listener.ora
+      - ./src/main/resources/schemas/setup/01_init_source_db.sql:/opt/oracle/scripts/setup/01_init_source_db.sql
+      - ./src/main/resources/schemas/setup/02_create_tables.sql:/opt/oracle/scripts/setup/02_create_tables.sql
+      - ./src/main/resources/schemas/setup/03_init_data.sql:/opt/oracle/scripts/setup/03_init_data.sql
     environment:
       - ORACLE_PWD=password
 
@@ -20,7 +21,9 @@ services:
       - 1522:1521
     volumes:
       - db-target-store:/opt/oracle/oradata
-      - ./src/main/resources/schemas/setup:/opt/oracle/scripts/setup
+      - ./src/main/resources/schemas/setup/01_init_target_db.sql:/opt/oracle/scripts/setup/01_init_target_db.sql
+      - ./src/main/resources/schemas/setup/02_create_tables.sql:/opt/oracle/scripts/setup/02_create_tables.sql
+      - ./src/main/resources/schemas/setup/03_init_data.sql:/opt/oracle/scripts/setup/03_init_data.sql
     environment:
       - ORACLE_PWD=password
 

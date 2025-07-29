@@ -104,63 +104,46 @@ TARGET_DB =
 この SQL スクリプトは、データベースコンテナ起動時に自動的に実行され、GoldenGate がデータベース操作を行うために必要なユーザーと権限を設定します。
 
 ```sql
--- =================================================================
--- CDB$ROOT (コンテナ・データベース・ルート) で実行されるコマンド
--- =================================================================
--- このスクリプトは、自動的にCDB$ROOTにSYSDBAとして接続された状態で実行されます。
+-- Oracle 23c GoldenGate用 ユーザーおよびPDBセットアップスクリプト
+-- このスクリプトは、CDB$ROOTコンテナにSYSDBAとして接続された状態で実行されます。
 
--- 1. GoldenGateレプリケーションを有効化 (CDB$ROOTでの実行が必須)
---    このパラメータをTRUEに設定することで、GoldenGateがデータベースの変更をキャプチャできるようになります。
+-- エラーが発生した場合は、ただちにスクリプトを終了します。
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+
+-- 1. GoldenGateレプリケーションの有効化 (CDB$ROOTでの実行が必須)
 ALTER SYSTEM SET ENABLE_GOLDENGATE_REPLICATION=TRUE SCOPE=BOTH;
 
--- データベースをマウント状態にしてからARCHIVELOGモードを有効にし、再度オープンします。
+-- 2. ARCHIVELOGモードの設定
+-- GoldenGateが変更をキャプチャするためには、データベースがARCHIVELOGモードである必要があります。
 SHUTDOWN IMMEDIATE;
 STARTUP MOUNT;
 ALTER DATABASE ARCHIVELOG;
 ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;
 ALTER DATABASE OPEN;
 
--- DBA_RECYCLEBIN のパージを無効化
-ALTER SYSTEM SET "_recyclebin_retention_time" = 0 SCOPE=SPFILE;
--- Logmining Serverの並列度を設定
-ALTER SYSTEM SET "_log_parallelism_max" = 8 SCOPE=SPFILE;
-
--- Logminerの起動に必要な追加パラメータ
-ALTER SYSTEM SET "_enable_logminer_parallel_capture" = TRUE SCOPE=SPFILE;
-
--- Logminer辞書の再構築 (Integrated ExtractがLogminerを自動起動しない場合に試す)
--- これは、Logminer辞書が破損している場合に有効
-EXEC DBMS_LOGMNR_D.BUILD(options => DBMS_LOGMNR_D.STORE_IN_DB);
-
--- 2. GoldenGate用の共通ユーザーを作成 (Oracle 12c以降の命名規則に従い、接頭辞 C## が必須)
---    CONTAINER=ALL を指定することで、全てのコンテナで利用可能な共通ユーザーとなります。
+-- 3. GoldenGate用の共通ユーザーを作成
+-- マルチテナント環境では、ユーザー名の接頭辞として C## が必須です。
 CREATE USER c##ggadmin IDENTIFIED BY password CONTAINER=ALL;
 
--- 3. 共通ユーザーに基本的な権限を全てのコンテナで付与
---    CONNECT: データベースへの接続権限
---    RESOURCE: オブジェクト作成権限
---    UNLIMITED TABLESPACE: 表領域の使用制限なし
---    CREATE VIEW: ビュー作成権限
---    SELECT ANY DICTIONARY: データディクショナリへの参照権限 (変更キャプチャに必要)
---    ALTER SYSTEM: システムパラメータ変更権限 (GoldenGateの操作に必要)
+-- 4. GoldenGateユーザーに必要な権限を付与
+-- データベースが完全にオープンされた状態で、権限を付与します。
 GRANT CONNECT, RESOURCE, UNLIMITED TABLESPACE TO c##ggadmin CONTAINER=ALL;
 GRANT CREATE VIEW TO c##ggadmin CONTAINER=ALL;
 GRANT SELECT ANY DICTIONARY TO c##ggadmin CONTAINER=ALL;
 GRANT ALTER SYSTEM TO c##ggadmin CONTAINER=ALL;
 
--- 4. Oracle 23c の新しいロールベースの権限モデルを使用して権限を付与
---    DBMS_GOLDENGATE_AUTH.GRANT_ADMIN_PRIVILEGE プロシージャは23cで廃止されたため、
---    OGG_CAPTURE と OGG_APPLY ロールを直接GRANTします。
---    OGG_CAPTURE: Extractプロセス(変更データ取得)に必要な権限
---    OGG_APPLY: Replicatプロセス(変更データ適用)に必要な権限
+-- Replicatが別スキーマのテーブルを操作するための強力な権限を付与
+GRANT INSERT ANY TABLE, UPDATE ANY TABLE, DELETE ANY TABLE TO c##ggadmin CONTAINER=ALL;
+
+-- Oracle 23c推奨のロールベースの権限を付与
 GRANT OGG_CAPTURE TO c##ggadmin CONTAINER=ALL;
 GRANT OGG_APPLY TO c##ggadmin CONTAINER=ALL;
 
--- 5. 念のため、特定のパッケージに対する実行権限を明示的に付与
---    これらのパッケージはGoldenGateの内部処理で利用されます。
+-- GoldenGateが内部的に使用するパッケージへの実行権限
 GRANT EXECUTE ON SYS.DBMS_CAPTURE_ADM TO c##ggadmin CONTAINER=ALL;
 GRANT EXECUTE ON SYS.DBMS_XSTREAM_GG_ADM TO c##ggadmin CONTAINER=ALL;
--- Logmining Server関連の追加権限付与 (念のため)
+
+-- 統合Extractに必要なLogminerへのアクセス権限
 GRANT SELECT ON V_$DATABASE TO c##ggadmin CONTAINER=ALL;
 GRANT SELECT ON V_$ARCHIVED_LOG TO c##ggadmin CONTAINER=ALL;
 GRANT SELECT ON V_$LOGMNR_CONTENTS TO c##ggadmin CONTAINER=ALL;
@@ -169,18 +152,21 @@ GRANT EXECUTE ON DBMS_LOGMNR_D TO c##ggadmin CONTAINER=ALL;
 
 
 -- =================================================================
--- PDB (プラガブル・データベース) で実行されるコマンド
+-- PDB (プラガブル・データベース) の設定
 -- =================================================================
--- 6. セッションをプラガブル・データベース(FREEPDB1)に切り替え
+
+-- 5. セッションをプラガブル・データベース(FREEPDB1)に切り替え
 ALTER SESSION SET CONTAINER = FREEPDB1;
 
--- 7. アプリケーション用のローカル・ユーザー 'appuser' をPDB内に作成
+-- 6. アプリケーション用のローカル・ユーザー 'appuser' をPDB内に作成
 CREATE USER appuser IDENTIFIED BY password;
 
--- 8. アプリケーション・ユーザーに権限を付与
+-- 7. アプリケーション・ユーザーに権限を付与
 GRANT CONNECT, RESOURCE TO appuser;
 ALTER USER appuser DEFAULT TABLESPACE USERS;
 ALTER USER appuser QUOTA UNLIMITED ON USERS;
+
+COMMIT;
 ```
 
 ## 2. GoldenGate 初期設定 (コンテナ起動後)
@@ -200,11 +186,11 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
 
     ```
     connect http://localhost:9011 as oggadmin password P@ssw0rd1
-    alter credentialstore add user c##ggadmin@SOURCE_DB password password alias ogg_src
-    alter credentialstore add user c##ggadmin@TARGET_DB password password alias ogg_tgt
+    alter credentialstore add user c##oggsrc@SOURCE_DB password password alias ogg_src
+    alter credentialstore add user c##oggtgt@TARGET_DB password password alias ogg_tgt
     ```
 
-    - `c##ggadmin`: データベースに作成した GoldenGate 用ユーザー。
+    - `c##oggsrc`: データベースに作成した GoldenGate 用ユーザー。
     - `SOURCE_DB / TARGET_DB`: `tnsnames.ora` で定義した接続識別子。
     - `password`: `c##ggadmin` ユーザーのパスワード。
     - `ogg_src / ogg_tgt`: 資格証明ストア内で使用するエイリアス名。
@@ -217,10 +203,10 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     Default domain: OracleGoldenGate
 
     Alias: ogg_src
-    Userid: c##ggadmin@SOURCE_DB
+    Userid: c##oggsrc@SOURCE_DB
 
     Alias: ogg_tgt
-    Userid: c##ggadmin@TARGET_DB
+    Userid: c##oggtgt@TARGET_DB
     ```
 
 3.  **継続的な変更同期用のプロセス (EXT1, REP1) を作成:**
@@ -278,7 +264,7 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     **チェックポイントテーブルを作成**
 
     ```
-    add checkpointtable c##ggadmin.checkpoint
+    add checkpointtable c##oggtgt.checkpoint
     ```
 
     **継続的な変更を適用する Replicat (REP1) を作成**
@@ -288,7 +274,7 @@ ALTER USER appuser QUOTA UNLIMITED ON USERS;
     edit params REP1
     ```
 
-    - `add checkpointtable c##ggadmin.checkpoint`: `Replicat` の処理状況を記録するチェックポイントテーブルを作成します
+    - `add checkpointtable c##oggtgt.checkpoint`: `Replicat` の処理状況を記録するチェックポイントテーブルを作成します
 
     エディタで以下の内容を記述
 

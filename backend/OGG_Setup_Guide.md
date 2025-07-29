@@ -261,7 +261,6 @@ dblogin useridalias ogg_src
     useridalias ogg_src
     exttrail ./dirdat/il
     table appuser.users;
-    GGSCHEMA c##oggsrc
     ```
 
     - `EXT_IL`: 初期ロード用 Extract プロセスの名前
@@ -299,6 +298,7 @@ dblogin useridalias ogg_tgt
     replicat REP_IL
     useridalias ogg_tgt
     map appuser.users, target appuser.users;
+    GGSCHEMA c##oggtgt
     ```
 
     - `REP_IL`: 初期ロード用 Replicat プロセスの名前

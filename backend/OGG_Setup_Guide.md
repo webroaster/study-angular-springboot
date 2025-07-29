@@ -259,7 +259,7 @@ dblogin useridalias ogg_src
     ```
     extract EXT_IL
     useridalias ogg_src
-    RMTOUTFILE ./dirdat/il
+    OUTFILE ./dirdat/il
     table appuser.users;
     ```
 
@@ -287,7 +287,7 @@ dblogin useridalias ogg_tgt
     replicat REP_IL
     useridalias ogg_tgt
     map appuser.users, target appuser.users;
-    EXTFILE ./dirdat/il
+    FILE ./dirdat/il
     ```
 
     - `REP_IL`: 初期ロード用 Replicat プロセスの名前

@@ -251,6 +251,7 @@ dblogin useridalias ogg_src
 
     ```
     add extract EXT_IL, integrated tranlog, begin now
+    add exttrail ./dirdat/il, extract EXT_IL
     edit params EXT_IL
     ```
 
@@ -267,6 +268,8 @@ dblogin useridalias ogg_src
     - `SPECIALRUN`: 初期ロード専用の Extract であることを示します。Extract がすべてのデータを処理し終えると自動的に停止します。
     - `exttrail ./dirdat/il`: 初期ロードで抽出した変更を書き出す証跡ファイルの名前とパス
     - `table appuser.users;`: `appuser.users` テーブルのみを初期ロードの対象とする
+    - `exttrail ./dirdat/il`: 初期ロードで抽出した変更を書き出す証跡ファイルの名前とパス
+    - `EXT_IL`: 証跡ファイルを割り当てる Extract プロセスの名前
 
     **Extract を DB に登録**
 
@@ -296,7 +299,6 @@ dblogin useridalias ogg_tgt
     replicat REP_IL
     useridalias ogg_tgt
     map appuser.users, target appuser.users;
-    GGSCHEMA c##oggtgt
     ```
 
     - `REP_IL`: 初期ロード用 Replicat プロセスの名前

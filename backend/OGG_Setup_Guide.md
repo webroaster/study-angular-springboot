@@ -255,12 +255,24 @@ delete replicat REP_IL
     useridalias ogg_src
     exttrail ./dirdat/il
     table appuser.users;
+    GGSCHEMA c##oggsrc
     ```
 
     - `EXT_IL`: 初期ロード用 Extract プロセスの名前
     - `SPECIALRUN`: 初期ロード専用の Extract であることを示します。Extract がすべてのデータを処理し終えると自動的に停止します。
     - `exttrail ./dirdat/il`: 初期ロードで抽出した変更を書き出す証跡ファイルの名前とパス
     - `table appuser.users;`: `appuser.users` テーブルのみを初期ロードの対象とする
+
+    table appuser.users;
+
+    **Extract を DB に登録**
+
+    ```
+    register extract EXT_IL database
+    ```
+
+    - `EXT_IL`: 登録する Extract プロセスの名前
+    - `DATABASE`: データベースに登録することを指定します
 
 2.  **初期ロード用 Replicat (REP_IL) を作成:**
 

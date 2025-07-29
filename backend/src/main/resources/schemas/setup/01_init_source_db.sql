@@ -48,9 +48,6 @@ GRANT SELECT ON V_$LOGMNR_CONTENTS TO c##oggsrc CONTAINER=ALL;
 GRANT EXECUTE ON DBMS_LOGMNR TO c##oggsrc CONTAINER=ALL;
 GRANT EXECUTE ON DBMS_LOGMNR_D TO c##oggsrc CONTAINER=ALL;
 
--- LogMinerの初期化
-EXEC DBMS_LOGMNR_D.BUILD(OPTIONS => DBMS_LOGMNR_D.STORE_IN_REDO_LOGS);
-
 -- =================================================================
 -- PDB (プラガブル・データベース) の設定
 -- =================================================================

@@ -241,7 +241,7 @@ delete extract EXT_IL
 delete replicat REP_IL
 ```
 
-**データベースログイン (ソースDB)**
+**データベースログイン (ソース DB)**
 
 ```
 dblogin useridalias ogg_src
@@ -268,8 +268,6 @@ dblogin useridalias ogg_src
     - `exttrail ./dirdat/il`: 初期ロードで抽出した変更を書き出す証跡ファイルの名前とパス
     - `table appuser.users;`: `appuser.users` テーブルのみを初期ロードの対象とする
 
-    table appuser.users;
-
     **Extract を DB に登録**
 
     ```
@@ -279,7 +277,7 @@ dblogin useridalias ogg_src
     - `EXT_IL`: 登録する Extract プロセスの名前
     - `DATABASE`: データベースに登録することを指定します
 
-**データベースログイン (ターゲットDB)**
+**データベースログイン (ターゲット DB)**
 
 ```
 dblogin useridalias ogg_tgt

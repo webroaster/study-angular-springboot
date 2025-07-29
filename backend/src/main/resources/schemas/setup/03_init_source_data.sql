@@ -2,8 +2,4 @@ ALTER SESSION SET CONTAINER = FREEPDB1;
 
 -- users テーブルの初期データ
 INSERT INTO APPUSER.USERS (USERNAME, DISPLAY_NAME, "PASSWORD", "STATUS") VALUES ('admin', '管理者', 'password', 'enable');
-
--- todos テーブルの初期データ (例)
-INSERT INTO APPUSER.TODOS (ID, TITLE, COMPLETED) VALUES (1, 'Buy groceries', 0);
-INSERT INTO APPUSER.TODOS (ID, TITLE, COMPLETED) VALUES (2, 'Walk the dog', 1);
 COMMIT;

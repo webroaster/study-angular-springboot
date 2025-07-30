@@ -297,14 +297,43 @@ TARGET_DB =
     docker exec -it demo_db_source expdp appuser/password@FREEPDB1 tables=appuser.users directory=DATA_PUMP_DIR dumpfile=users.dmp logfile=expdp_users.log
     ```
 
+    > **補足: 大規模データ（億単位）のロードを高速化する最適化**
+    >
+    > 億単位のデータを扱う場合、Data Pump の並列処理機能や圧縮機能を利用して、処理時間を大幅に短縮することが推奨されます。
+    >
+    > **最適化された `expdp` コマンド例:**
+    > ```bash
+    > docker exec -it demo_db_source expdp appuser/password@FREEPDB1 
+    >   tables=appuser.users 
+    >   directory=DATA_PUMP_DIR 
+    >   dumpfile=users_%U.dmp 
+    >   logfile=expdp_users.log 
+    >   parallel=8 
+    >   compression=all
+    > ```
+    >
+    > - `parallel=8`: 処理を8並列で実行します。この値は、データベースサーバーのCPUコア数に合わせて調整してください。
+    > - `dumpfile=users_%U.dmp`: `parallel` を指定した場合、ダンプファイルが複数生成されるため、`%U` を使ってファイル名を連番にします。
+    > - `compression=all`: ダンプファイルを圧縮し、ディスクI/Oとネットワーク転送量を削減します。
+
 4.  **ダンプファイルをターゲット DB コンテナに転送**
 
     `docker cp` コマンドを使い、エクスポートしたダンプファイル (`users.dmp`) を `db-source` コンテナからホストマシン経由で `db-target` コンテナにコピーします。
+    
+    > **Note:** `parallel` を使用した場合は、生成された全てのダンプファイル (`users_01.dmp`, `users_02.dmp`, ...) を転送してください。
 
     ```bash
+    # シングルファイルの場合
     docker cp demo_db_source:/opt/oracle/oradata/pump/users.dmp .
     docker cp users.dmp demo_db_target:/opt/oracle/oradata/pump/
     rm users.dmp
+
+    # パラレル実行で複数ファイルが生成された場合の転送例 (参考)
+    # docker cp demo_db_source:/opt/oracle/oradata/pump/users_01.dmp .
+    # docker cp demo_db_source:/opt/oracle/oradata/pump/users_02.dmp .
+    # ...
+    # docker cp users_*.dmp demo_db_target:/opt/oracle/oradata/pump/
+    # rm users_*.dmp
     ```
 
 5.  **ターゲット DB へデータをインポート (`impdp`)**
@@ -314,6 +343,21 @@ TARGET_DB =
     ```bash
     docker exec -it demo_db_target impdp appuser/password@FREEPDB1 directory=DATA_PUMP_DIR dumpfile=users.dmp logfile=impdp_users.log
     ```
+
+    > **補足: 最適化された `impdp` コマンド例:**
+    >
+    > エクスポート時に `parallel` を使用した場合、インポート時も同様に `parallel` を指定することで、ロード処理を高速化できます。
+    >
+    > ```bash
+    > docker exec -it demo_db_target impdp appuser/password@FREEPDB1 
+    >   directory=DATA_PUMP_DIR 
+    >   dumpfile=users_%U.dmp 
+    >   logfile=impdp_users.log 
+    >   parallel=8
+    > ```
+    >
+    > - `dumpfile` と `parallel` の値は、`expdp` 実行時と合わせてください。
+
 
 6.  **ターゲット DB でデータを確認**
 

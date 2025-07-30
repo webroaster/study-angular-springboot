@@ -240,159 +240,143 @@ TARGET_DB =
 
     - `add checkpointtable c##oggtgt.checkpoint`: `Replicat` の処理状況を記録するチェックポイントテーブルを作成します
 
-## 2.1. 初期ロードの実行 (users テーブルのみ)
+## 2.1. 初期ロードの実行 (Instantiation CSN を利用したベストプラクティス)
 
-既存のデータをソース DB からターゲット DB へ一度だけ転送します。
+ここでは、Oracle が推奨する **Instantiation CSN** を利用した方法で、`users` テーブルの初期ロードを行います。この方法は、Oracle Data Pump (`expdp`/`impdp`) と GoldenGate を連携させ、初期ロード中のデータと差分更新データの重複適用を Replicat プロセスが自動的に回避する、最も安全で信頼性の高い方式です。
 
-**注意:** 以下の手順を実行する前に、もし以前の初期ロードプロセスが残っている場合は削除してください。
+以前の手動による初期ロードプロセス (`EXT_IL`, `REP_IL`) は不要です。
 
-```bash
-# OGGコンテナに入り、adminclientを起動
-docker exec -it demo_ogg bash
-/u01/ogg/bin/adminclient
+### 手順
 
-# adminclientプロンプトで以下を実行
-connect http://localhost:9011 as oggadmin password P@ssw0rd1
-stop extract EXT_IL
-stop replicat REP_IL
-delete extract EXT_IL
-delete replicat REP_IL
-```
+1.  **Replicat パラメータの更新 (`ENABLE_INSTANTIATION_FILTERING`)**
 
-1.  **初期ロード用 Extract (EXT_IL) のパラメータファイルを作成:**
-
-    OGG コンテナ内で以下のコマンドを実行し、`EXT_IL.prm` ファイルを作成します。
+    継続同期用の Replicat (`REP1`) が、Data Pump でロードされたデータを認識し、重複適用をスキップできるように、パラメータファイルに `DBOPTIONS ENABLE_INSTANTIATION_FILTERING` を追加します。
 
     ```bash
-    docker exec demo_ogg bash -c "echo -e 'extract EXT_IL\nuseridalias ogg_src\nexttrail /u02/Deployment/var/lib/data/dirdat/il\ntable appuser.users;' > /u02/Deployment/etc/conf/ogg/EXT_IL.prm"
+    docker exec demo_ogg bash -c "echo -e 'replicat REP1\nuseridalias ogg_tgt\nDBOPTIONS ENABLE_INSTANTIATION_FILTERING\nmap appuser.users, target appuser.users;' > /u02/Deployment/etc/conf/ogg/REP1.prm"
     ```
 
-    **`EXT_IL.prm` の内容:**
+    **`REP1.prm` の内容:**
 
     ```
-    extract EXT_IL
-    useridalias ogg_src
-    exttrail /u02/Deployment/var/lib/data/dirdat/il
-    table appuser.users;
-    ```
-
-    - `EXT_IL`: Extract プロセスの名前
-    - `useridalias ogg_src`: ソースデータベースへの接続に使用する資格証明ストアのエイリアス
-    - `exttrail /u02/Deployment/var/lib/data/dirdat/il`: 抽出した変更を書き出す証跡ファイルの名前とパス
-    - `table appuser.users;`: `appuser.users` テーブルのみを初期ロードの対象とする
-
-2.  **初期ロード用 Replicat (REP_IL) のパラメータファイルを作成:**
-
-    OGG コンテナ内で以下のコマンドを実行し、`REP_IL.prm` ファイルを作成します。
-
-    ```bash
-    docker exec demo_ogg bash -c "echo -e 'replicat REP_IL\nuseridalias ogg_tgt\nmap appuser.users, target appuser.users;' > /u02/Deployment/etc/conf/ogg/REP_IL.prm"
-    ```
-
-    **`REP_IL.prm` の内容:**
-
-    ```
-    replicat REP_IL
+    replicat REP1
     useridalias ogg_tgt
+    DBOPTIONS ENABLE_INSTANTIATION_FILTERING
     map appuser.users, target appuser.users;
     ```
 
-    - `REP_IL`: Replicat プロセスの名前
-    - `useridalias ogg_tgt`: ターゲットデータベースへの接続に使用する資格証明ストアのエイリアス
-    - `map appuser.users, target appuser.users;`: ソースの `appuser.users` テーブルを、ターゲットの `appuser.users` テーブルにマッピングする
+2.  **Data Pump 用のディレクトリを作成**
 
-3.  **初期ロード用 Extract (EXT_IL) を作成:**
-
-    `adminclient` プロンプトで以下を実行します。
-
-    ```
-    dblogin useridalias ogg_src
-    add extract EXT_IL, tranlog, begin now
-    register extract EXT_IL database
-    ```
-
-    - `EXT_IL`: Extract プロセスの名前
-    - `tranlog`: トランザクションログから変更を読み取ることを示します。
-    - `begin now`: 現在時刻から変更のキャプチャを開始します。
-    - `register extract EXT_IL database`: Extract をデータベースに登録します。
-
-4.  **初期ロード用 Replicat (REP_IL) を作成:**
-
-    `adminclient` プロンプトで以下を実行します。
-
-    ```
-    dblogin useridalias ogg_tgt
-    add replicat REP_IL, exttrail /u02/Deployment/var/lib/data/dirdat/il, checkpointtable c##oggtgt.checkpoint
-    ```
-
-    - `REP_IL`: Replicat プロセスの名前
-    - `exttrail /u02/Deployment/var/lib/data/dirdat/il`: 読み込む証跡ファイルの名前とパス
-    - `checkpointtable c##oggtgt.checkpoint`: Replicat の処理状況を記録するチェックポイントテーブルを指定します。
-
-5.  **初期ロードプロセスを開始:**
-
-    `adminclient` プロンプトで以下を実行します。
-
-    ```
-    start extract EXT_IL
-    start replicat REP_IL
-    ```
-
-6.  **プロセスの状態を確認:**
-
-    `info all` コマンドで、`EXT_IL` と `REP_IL` の `Status` が `STOPPED` になっていることを確認します。これは、処理完了後に自動停止するためです。
-
-    ```
-    info all
-    ```
-
-7.  **ターゲット DB で `users` テーブルのデータを確認:**
+    Data Pump がダンプファイルを読み書きするために、データベース内にディレクトリ・オブジェクトを作成し、コンテナ内に物理ディレクトリを作成します。
 
     ```bash
-    docker exec -it demo_db_target bash
-    sqlplus appuser/password@FREEPDB1
-    -- SQLプロンプトで以下を実行
-    SELECT * FROM users;
+    # ソースDBとターゲットDBに物理ディレクトリを作成
+    docker exec demo_db_source mkdir -p /opt/oracle/oradata/pump
+    docker exec demo_db_target mkdir -p /opt/oracle/oradata/pump
+
+    # ソースDBにディレクトリ・オブジェクトを作成し、権限を付与
+    docker exec -i demo_db_source sqlplus sys/password@FREEPDB1 as sysdba <<EOF
+    CREATE OR REPLACE DIRECTORY DATA_PUMP_DIR AS '/opt/oracle/oradata/pump';
+    GRANT READ, WRITE ON DIRECTORY DATA_PUMP_DIR TO appuser;
+    exit;
+    EOF
+
+    # ターゲットDBにディレクトリ・オブジェクトを作成し、権限を付与
+    docker exec -i demo_db_target sqlplus sys/password@FREEPDB1 as sysdba <<EOF
+    CREATE OR REPLACE DIRECTORY DATA_PUMP_DIR AS '/opt/oracle/oradata/pump';
+    GRANT READ, WRITE ON DIRECTORY DATA_PUMP_DIR TO appuser;
+    exit;
+    EOF
     ```
 
-    ソース DB の `users` テーブルのデータがターゲット DB に転送されていれば、初期ロードは成功です.
+3.  **ソース DB からデータをエクスポート (`expdp`)**
+
+    `db-source` コンテナ内で `expdp` コマンドを実行し、`appuser.users` テーブルのデータをエクスポートします。
+
+    ```bash
+    docker exec -it demo_db_source expdp appuser/password@FREEPDB1 tables=appuser.users directory=DATA_PUMP_DIR dumpfile=users.dmp logfile=expdp_users.log
+    ```
+
+4.  **ダンプファイルをターゲット DB コンテナに転送**
+
+    `docker cp` コマンドを使い、エクスポートしたダンプファイル (`users.dmp`) を `db-source` コンテナからホストマシン経由で `db-target` コンテナにコピーします。
+
+    ```bash
+    docker cp demo_db_source:/opt/oracle/oradata/pump/users.dmp .
+    docker cp users.dmp demo_db_target:/opt/oracle/oradata/pump/
+    rm users.dmp
+    ```
+
+5.  **ターゲット DB へデータをインポート (`impdp`)**
+
+    `db-target` コンテナ内で `impdp` コマンドを実行し、転送されたダンプファイルをインポートします。
+
+    ```bash
+    docker exec -it demo_db_target impdp appuser/password@FREEPDB1 directory=DATA_PUMP_DIR dumpfile=users.dmp logfile=impdp_users.log
+    ```
+
+6.  **ターゲット DB でデータを確認**
+
+    インポートが成功したことを確認します。
+
+    ```bash
+    docker exec -it demo_db_target bash -c "sqlplus appuser/password@FREEPDB1 <<EOF
+    SELECT COUNT(*) FROM users;
+    exit;
+    EOF"
+    ```
+
+    ソース DB の `users` テーブルと同じ件数が表示されれば、初期ロードは成功です。
 
 ## 3. データ同期の実行と確認
 
-1.  **同期プロセスを開始:**
-    作成した Extract と Replicat を起動します。
+初期ロードが完了したので、継続的なデータ同期プロセスを開始し、動作を確認します。
 
-    ```
+1.  **同期プロセスを開始:**
+    作成済みの Extract (`EXT1`) と Replicat (`REP1`) を起動します。
+
+    ```bash
+    docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
+    connect http://localhost:9011 as oggadmin password P@ssw0rd1
     start extract EXT1
     start replicat REP1
+    EOF
     ```
 
 2.  **プロセスの状態を確認:**
     `info all` コマンドで、`EXT1` と `REP1` の `Status` が `RUNNING` になっていることを確認します。
 
-    ```
+    ```bash
+    docker exec -i demo_ogg /u01/ogg/bin/adminclient <<EOF
+    connect http://localhost:9011 as oggadmin password P@ssw0rd1
     info all
+    EOF
     ```
 
 3.  **データ同期をテスト:**
-    ソース DB にデータを挿入し、ターゲット DB に反映されるかを確認します。
+    ソース DB の `users` テーブルにデータを挿入し、ターゲット DB に反映されるかを確認します。
 
     - **ソース DB に接続してデータを挿入:**
 
       ```bash
-      docker exec -it demo_db_source bash
-      sqlplus appuser/password@FREEPDB1
-      -- SQLプロンプトで以下を実行
-      INSERT INTO todos (id, title, completed) VALUES (99, 'init load test', 1);
+      docker exec -it demo_db_source bash -c "sqlplus appuser/password@FREEPDB1 <<EOF
+      INSERT INTO users (id, name, email) VALUES (4, 'new_user', 'new.user@example.com');
       COMMIT;
-      EXIT;
+      exit;
+      EOF"
       ```
 
-    - **ターゲット DB に接続してデータを確認:**
+    - **ターゲット DB に接続してデータを確認 (数秒待機):**
+
       ```bash
-      docker exec -it demo_db_target bash
-      sqlplus appuser/password@FREEPDB1
-      -- SQLプロンプトで以下を実行
-      SELECT * FROM todos WHERE id = 99;
+      # 同期には数秒かかる場合があります
+      sleep 5
+
+      docker exec -it demo_db_target bash -c "sqlplus appuser/password@FREEPDB1 <<EOF
+      SET LINESIZE 100
+      SELECT * FROM users WHERE id = 4;
+      exit;
+      EOF"
       ```
-      ソースで挿入したレコードが表示されれば、継続的なデータ同期は正常に動作しています。
+
+      ソースで挿入した `id = 4` のレコードが表示されれば、継続的なデータ同期は正常に動作しています。

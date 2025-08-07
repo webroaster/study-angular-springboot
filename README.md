@@ -38,6 +38,7 @@ Gemini-CLI を使ってレッスンごとにテストファイルを作成して
 
 - [Oracle database イメージの作成](./documents/oracle/local.md)
 - [Oracle GoldenGate](./documents/oracle/oracle-goldengate.md)
+- [Oracle ユーザー・スキーマについて](./documents/oracle/user.md)
 
 ## インストール
 
